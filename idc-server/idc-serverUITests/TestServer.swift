@@ -7,10 +7,26 @@
 
 import Foundation
 import FlyingFox
+import UIKit
 
 struct HealthResponse: Codable {
     let status: String
 }
+
+struct InfoResponse: Codable {
+    let name: String
+    let model: String
+    let os_version: String
+    let is_simulator: Bool
+}
+
+private let isSimulator: Bool = {
+#if targetEnvironment(simulator)
+    return true
+#else
+    return false
+#endif
+}()
 
 actor TestServer {
     static let defaultPort: UInt16 = 8080
@@ -46,6 +62,22 @@ actor TestServer {
         guard !routesConfigured else { return }
         await server.appendRoute("/health", for: [.GET]) { _ in
             let body = try JSONEncoder().encode(HealthResponse(status: "ok"))
+            return HTTPResponse(
+                statusCode: .ok,
+                headers: [.contentType: "application/json"],
+                body: body
+            )
+        }
+        await server.appendRoute("/info", for: [.GET]) { _ in
+            let response = await MainActor.run {
+                InfoResponse(
+                    name: UIDevice.current.name,
+                    model: UIDevice.current.model,
+                    os_version: UIDevice.current.systemVersion,
+                    is_simulator: isSimulator
+                )
+            }
+            let body = try JSONEncoder().encode(response)
             return HTTPResponse(
                 statusCode: .ok,
                 headers: [.contentType: "application/json"],

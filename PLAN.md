@@ -7,7 +7,7 @@
 - [x] 建立最小 host app（可空白 UI）
 - [x] 在 UI Test target 建立 HTTP server 管理層（start/stop、port 設定、錯誤直接拋出）
 - [x] 在 UI Test target 實作 `GET /health` 端點與回應模型
-- [ ] 在 UI Test target 實作 `GET /info` 端點（先回傳基本裝置資訊）
+- [x] 在 UI Test target 實作 `GET /info` 端點（先回傳基本裝置資訊）
 - [x] 以 UI Test 啟動 server（xcodebuild test / Xcode Test Runner）
 
 ## Phase 2: idc-server XCUITest 整合

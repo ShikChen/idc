@@ -7,7 +7,7 @@
 
 import XCTest
 
-final class HealthEndpointTests: XCTestCase {
+final class ServerEndpointsTests: XCTestCase {
     private static let server = TestServer()
 
     override func setUp() async throws {
@@ -19,7 +19,7 @@ final class HealthEndpointTests: XCTestCase {
         await Self.server.stop()
     }
 
-    func testHealthEndpoint() async throws {
+    func testHealth() async throws {
         let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/health"))
         let (data, response) = try await URLSession.shared.data(from: url)
         let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
@@ -28,6 +28,24 @@ final class HealthEndpointTests: XCTestCase {
 
         let payload = try JSONDecoder().decode(HealthResponse.self, from: data)
         XCTAssertEqual(payload.status, "ok")
+    }
+
+    func testInfo() async throws {
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/info"))
+        let (data, response) = try await URLSession.shared.data(from: url)
+        let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
+
+        XCTAssertEqual(httpResponse.statusCode, 200)
+
+        let info = try JSONDecoder().decode(InfoResponse.self, from: data)
+        XCTAssertFalse(info.name.isEmpty)
+        XCTAssertFalse(info.model.isEmpty)
+        XCTAssertFalse(info.os_version.isEmpty)
+#if targetEnvironment(simulator)
+        XCTAssertTrue(info.is_simulator)
+#else
+        XCTAssertFalse(info.is_simulator)
+#endif
     }
 }
 
