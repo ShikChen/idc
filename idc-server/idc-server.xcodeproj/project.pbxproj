@@ -6,6 +6,10 @@
 	objectVersion = 77;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		D7DC134B2F12A7F20006F954 /* FlyingFox in Frameworks */ = {isa = PBXBuildFile; productRef = D7DC134A2F12A7F20006F954 /* FlyingFox */; };
+/* End PBXBuildFile section */
+
 /* Begin PBXContainerItemProxy section */
 		D7DC132D2F123D990006F954 /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
@@ -66,6 +70,7 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				D7DC134B2F12A7F20006F954 /* FlyingFox in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,6 +163,7 @@
 			);
 			name = "idc-serverUITests";
 			packageProductDependencies = (
+				D7DC134A2F12A7F20006F954 /* FlyingFox */,
 			);
 			productName = "idc-serverUITests";
 			productReference = D7DC13362F123D990006F954 /* idc-serverUITests.xctest */;
@@ -195,6 +201,9 @@
 			);
 			mainGroup = D7DC13162F123D990006F954;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				D7DC13492F12A7F20006F954 /* XCRemoteSwiftPackageReference "FlyingFox" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = D7DC13202F123D990006F954 /* Products */;
 			projectDirPath = "";
@@ -615,6 +624,25 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		D7DC13492F12A7F20006F954 /* XCRemoteSwiftPackageReference "FlyingFox" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/swhitty/FlyingFox";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 0.26.0;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		D7DC134A2F12A7F20006F954 /* FlyingFox */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = D7DC13492F12A7F20006F954 /* XCRemoteSwiftPackageReference "FlyingFox" */;
+			productName = FlyingFox;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = D7DC13172F123D990006F954 /* Project object */;
 }
