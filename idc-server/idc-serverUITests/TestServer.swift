@@ -18,6 +18,7 @@ struct InfoResponse: Codable {
     let model: String
     let os_version: String
     let is_simulator: Bool
+    let udid: String?
 }
 
 private let isSimulator: Bool = {
@@ -74,7 +75,8 @@ actor TestServer {
                     name: UIDevice.current.name,
                     model: UIDevice.current.model,
                     os_version: UIDevice.current.systemVersion,
-                    is_simulator: isSimulator
+                    is_simulator: isSimulator,
+                    udid: ProcessInfo.processInfo.environment["SIMULATOR_UDID"]
                 )
             }
             let body = try JSONEncoder().encode(response)

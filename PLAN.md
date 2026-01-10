@@ -27,6 +27,7 @@
 - [ ] `POST /tap` 點擊端點
 - [ ] `POST /swipe` 滑動端點
 - [ ] `POST /input` 輸入文字端點
+- [ ] /info 支援 `IDC_UDID`（由 CLI 傳入）
 - [ ] 研究 XCUITest 如何與 HTTP server 協作
 
 ## Phase 4: idc-cli 功能擴充

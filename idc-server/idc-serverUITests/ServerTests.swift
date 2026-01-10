@@ -43,6 +43,7 @@ final class ServerEndpointsTests: XCTestCase {
         XCTAssertFalse(info.os_version.isEmpty)
 #if targetEnvironment(simulator)
         XCTAssertTrue(info.is_simulator)
+        XCTAssertNotNil(info.udid)
 #else
         XCTAssertFalse(info.is_simulator)
 #endif
