@@ -8,6 +8,7 @@
 import Foundation
 import FlyingFox
 import UIKit
+import XCTest
 
 struct HealthResponse: Codable {
     let status: String
@@ -84,6 +85,16 @@ actor TestServer {
                 statusCode: .ok,
                 headers: [.contentType: "application/json"],
                 body: body
+            )
+        }
+        await server.appendRoute("/screenshot", for: [.GET]) { _ in
+            let data = await MainActor.run {
+                XCUIScreen.main.screenshot().pngRepresentation
+            }
+            return HTTPResponse(
+                statusCode: .ok,
+                headers: [.contentType: "image/png"],
+                body: data
             )
         }
         routesConfigured = true

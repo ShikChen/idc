@@ -23,7 +23,7 @@
 
 ## Phase 3: idc-server XCUITest 擴充
 
-- [ ] `GET /screenshot` 截圖端點
+- [x] `GET /screenshot` 截圖端點
 - [ ] `GET /hierarchy` UI 元素樹端點
 - [ ] `POST /tap` 點擊端點
 - [ ] `POST /swipe` 滑動端點
@@ -43,7 +43,7 @@
 ## Phase 5: idc-cli + idc-server 整合
 
 - [ ] HTTP client 整合
-- [ ] `idc ui screenshot`
+- [x] `idc screenshot`
 - [ ] `idc ui tap`
 - [ ] `idc ui swipe`
 - [ ] `idc ui input`

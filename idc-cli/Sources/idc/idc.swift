@@ -13,7 +13,7 @@ struct Idc: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "idc",
         abstract: "iOS Device Control CLI",
-        subcommands: [Server.self]
+        subcommands: [Server.self, Screenshot.self]
     )
 }
 
@@ -82,6 +82,38 @@ struct Health: AsyncParsableCommand {
         }
 
         print("ok")
+    }
+}
+
+struct Screenshot: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Capture a screenshot from idc-server"
+    )
+
+    @Option(name: [.customShort("o"), .long], help: "Output path. Use '-' for stdout.")
+    var output: String?
+
+    @Option(name: .long, help: "Request timeout in seconds.")
+    var timeout: Double = 5
+
+    mutating func run() async throws {
+        // TODO: Use simctl screenshot when targeting a simulator.
+        let data: Data
+        do {
+            data = try await fetchData(path: "/screenshot", timeout: timeout)
+        } catch {
+            throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+        }
+
+        if output == "-" {
+            FileHandle.standardOutput.write(data)
+            return
+        }
+
+        let path = output ?? defaultScreenshotPath()
+        let url = URL(fileURLWithPath: path)
+        try data.write(to: url)
+        print(path)
     }
 }
 
@@ -211,4 +243,12 @@ private func fetchData(path: String, timeout: TimeInterval) async throws -> Data
         }
         task.resume()
     }
+}
+
+private func defaultScreenshotPath() -> String {
+    let formatter = DateFormatter()
+    formatter.locale = Locale(identifier: "en_US_POSIX")
+    formatter.timeZone = TimeZone.current
+    formatter.dateFormat = "yyyyMMdd-HHmmss"
+    return "screenshot-\(formatter.string(from: Date())).png"
 }
