@@ -11,7 +11,7 @@
 
 ## Phase 2: idc-cli 基礎 + 自動啟動 server（Simulator）
 
-- [ ] 建立 `idc-cli/` Swift Package（executable）
+- [x] 建立 `idc-cli/` Swift Package（executable）
 - [ ] 加入 swift-argument-parser，建立 `idc` root command
 - [ ] 建立共用設定（server port、xcodebuild 路徑、cache 路徑）
 - [ ] 實作 simulator 裝置偵測（已 boot；多台要求 `--udid`）
