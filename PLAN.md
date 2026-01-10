@@ -2,9 +2,9 @@
 
 ## Phase 1: idc-server iOS App 基礎
 
-- [ ] 設定 iOS 16+ deployment target，確認 Simulator/真機可啟動
+- [x] 設定 iOS 16+ deployment target，確認 Simulator/真機可啟動
 - [x] 透過 Swift Package Manager 加入 FlyingFox，確保專案可編譯
-- [ ] 建立最小 host app（可空白 UI）
+- [x] 建立最小 host app（可空白 UI）
 - [x] 在 UI Test target 建立 HTTP server 管理層（start/stop、port 設定、錯誤直接拋出）
 - [x] 在 UI Test target 實作 `GET /health` 端點與回應模型
 - [ ] 在 UI Test target 實作 `GET /info` 端點（先回傳基本裝置資訊）
