@@ -12,13 +12,14 @@
 ## Phase 2: idc-cli 基礎 + 自動啟動 server（Simulator）
 
 - [x] 建立 `idc-cli/` Swift Package（executable）
-- [ ] 加入 swift-argument-parser，建立 `idc` root command
+- [x] 加入 swift-argument-parser，建立 `idc` root command
 - [ ] 建立共用設定（server port、xcodebuild 路徑、cache 路徑）
-- [ ] 實作 simulator 裝置偵測（已 boot；多台要求 `--udid`）
-- [ ] `idc server health`：檢查 `/health`，若沒起來則自動啟動
-- [ ] 呼叫 xcodebuild 以 UI Test 啟動 server（keep-alive test）
+- [x] 實作 simulator 裝置偵測（已 boot；多台要求 `--udid`）
+- [x] `idc server start`：呼叫 xcodebuild 以 UI Test 啟動 server（keep-alive test）
+- [x] `idc server health`：檢查 `/health`
+- [ ] `idc server health`：若沒起來則自動啟動
 - [ ] 啟動後輪詢 `/health` 直到可用或超時
-- [ ] 清楚的錯誤訊息（找不到 booted simulator / 多台未指定 / xcodebuild 失敗）
+- [x] 清楚的錯誤訊息（找不到 booted simulator / 多台未指定 / xcodebuild 失敗）
 
 ## Phase 3: idc-server XCUITest 擴充
 

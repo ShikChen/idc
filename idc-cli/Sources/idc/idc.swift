@@ -8,7 +8,7 @@ import ArgumentParser
 import Foundation
 
 @main
-struct Idc: ParsableCommand {
+struct Idc: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "idc",
         abstract: "iOS Device Control CLI",
@@ -19,7 +19,7 @@ struct Idc: ParsableCommand {
 struct Server: ParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Manage idc-server",
-        subcommands: [Start.self]
+        subcommands: [Start.self, Health.self]
     )
 }
 
@@ -44,7 +44,43 @@ struct Start: ParsableCommand {
             "-only-testing:idc-serverUITests/ServerKeepAliveTests/testServerKeepAlive"
         ]
 
-        try runStreamingProcess("/usr/bin/xcodebuild", args)
+        try runStreamingProcess("xcodebuild", args)
+    }
+}
+
+struct Health: AsyncParsableCommand {
+    static let configuration = CommandConfiguration(
+        abstract: "Check idc-server health on localhost:8080"
+    )
+
+    @Option(name: .long, help: "Expected simulator UDID (optional).")
+    var udid: String?
+
+    @Option(name: .long, help: "Request timeout in seconds.")
+    var timeout: Double = 3
+
+    mutating func run() async throws {
+        let health: HealthResponse = try await fetchJSON(
+            path: "/health",
+            timeout: timeout
+        )
+
+        guard health.status.lowercased() == "ok" else {
+            throw ValidationError("Server unhealthy: \(health.status)")
+        }
+
+        if let udid {
+            let info: InfoResponse = try await fetchJSON(
+                path: "/info",
+                timeout: timeout
+            )
+            if info.udid != udid {
+                let actual = info.udid ?? "nil"
+                throw ValidationError("Server is running for a different simulator. Expected \(udid), got \(actual).")
+            }
+        }
+
+        print("ok")
     }
 }
 
@@ -101,9 +137,7 @@ private func locateServerProject() throws -> URL {
 }
 
 private func runProcess(_ launchPath: String, _ arguments: [String]) throws -> Data {
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: launchPath)
-    process.arguments = arguments
+    let process = makeProcess(launchPath, arguments)
 
     let stdout = Pipe()
     let stderr = Pipe()
@@ -125,9 +159,7 @@ private func runProcess(_ launchPath: String, _ arguments: [String]) throws -> D
 }
 
 private func runStreamingProcess(_ launchPath: String, _ arguments: [String]) throws {
-    let process = Process()
-    process.executableURL = URL(fileURLWithPath: launchPath)
-    process.arguments = arguments
+    let process = makeProcess(launchPath, arguments)
     process.standardOutput = FileHandle.standardOutput
     process.standardError = FileHandle.standardError
 
@@ -136,5 +168,55 @@ private func runStreamingProcess(_ launchPath: String, _ arguments: [String]) th
 
     if process.terminationStatus != 0 {
         throw ValidationError("xcodebuild failed with exit code \(process.terminationStatus).")
+    }
+}
+
+private func makeProcess(_ command: String, _ arguments: [String]) -> Process {
+    let process = Process()
+    if command.contains("/") {
+        process.executableURL = URL(fileURLWithPath: command)
+        process.arguments = arguments
+    } else {
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
+        process.arguments = [command] + arguments
+    }
+    return process
+}
+
+private struct HealthResponse: Decodable {
+    let status: String
+}
+
+private struct InfoResponse: Decodable {
+    let udid: String?
+}
+
+private func fetchJSON<T: Decodable>(path: String, timeout: TimeInterval) async throws -> T {
+    do {
+        let data = try await fetchData(path: path, timeout: timeout)
+        return try JSONDecoder().decode(T.self, from: data)
+    } catch {
+        throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+    }
+}
+
+private func fetchData(path: String, timeout: TimeInterval) async throws -> Data {
+    let url = URL(string: "http://127.0.0.1:8080\(path)")!
+    var request = URLRequest(url: url)
+    request.timeoutInterval = timeout
+
+    return try await withCheckedThrowingContinuation { continuation in
+        let task = URLSession.shared.dataTask(with: request) { data, _, error in
+            if let error {
+                continuation.resume(throwing: error)
+                return
+            }
+            guard let data else {
+                continuation.resume(throwing: URLError(.badServerResponse))
+                return
+            }
+            continuation.resume(returning: data)
+        }
+        task.resume()
     }
 }
