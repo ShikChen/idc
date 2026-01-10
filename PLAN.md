@@ -24,7 +24,7 @@
 ## Phase 3: idc-server XCUITest 擴充
 
 - [x] `GET /screenshot` 截圖端點
-- [ ] `GET /hierarchy` UI 元素樹端點
+- [ ] `GET /describe-ui` UI 元素樹端點
 - [ ] `POST /tap` 點擊端點
 - [ ] `POST /swipe` 滑動端點
 - [ ] `POST /input` 輸入文字端點
@@ -47,7 +47,7 @@
 - [ ] `idc ui tap`
 - [ ] `idc ui swipe`
 - [ ] `idc ui input`
-- [ ] `idc ui hierarchy`
+- [ ] `idc describe-ui`
 - [ ] 服務發現（Bonjour/mDNS 或 localhost:port）
 - [ ] Simulator 和 Real Device 統一介面
 - [ ] 自動選擇設備（只有一台時不需 `--udid`）

@@ -48,6 +48,26 @@ final class ServerEndpointsTests: XCTestCase {
         XCTAssertFalse(info.is_simulator)
 #endif
     }
+
+    func testDescribeUI() async throws {
+        let appState = await MainActor.run {
+            let app = XCUIApplication()
+            app.launch()
+            return app.state
+        }
+        XCTAssertEqual(appState, .runningForeground)
+
+        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/describe-ui"))
+        let (data, response) = try await URLSession.shared.data(from: url)
+        let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
+
+        XCTAssertEqual(httpResponse.statusCode, 200)
+
+        let payload = try JSONDecoder().decode(DescribeUIResponse.self, from: data)
+        XCTAssertFalse(payload.root.elementType.isEmpty)
+        XCTAssertGreaterThanOrEqual(payload.root.frame.width, 0)
+        XCTAssertGreaterThanOrEqual(payload.root.frame.height, 0)
+    }
 }
 
 final class ServerKeepAliveTests: XCTestCase {

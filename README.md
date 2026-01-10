@@ -15,7 +15,7 @@ iOS 自動化工具組，讓 AI coding agent 可以控制 iOS 模擬器和真實
 - **idc-server (Companion App)**
   - HTTP Server
   - XCUITest Runner
-  - 提供 /tap, /swipe, /input, /hierarchy, /screenshot 等 API
+  - 提供 /tap, /swipe, /input, /describe-ui, /screenshot 等 API
 
 ## 兩個專案
 
@@ -46,7 +46,7 @@ idc-server iOS App
 │   ├── GET  /health              # 健康檢查
 │   ├── GET  /info                # 設備資訊
 │   ├── GET  /screenshot          # 截圖
-│   ├── GET  /hierarchy           # UI 元素樹
+│   ├── GET  /describe-ui         # UI 元素樹
 │   ├── POST /tap                 # 點擊
 │   ├── POST /swipe               # 滑動
 │   ├── POST /input               # 輸入文字
@@ -72,7 +72,7 @@ idc-server iOS App
 GET  /health                      → { "status": "ok" }
 GET  /info                        → { "name": "iPhone", "os": "18.2", ... }
 GET  /screenshot?format=png       → image/png binary
-GET  /hierarchy                   → { "elements": [...] }
+GET  /describe-ui                 → { "root": { ... } }
 POST /tap      { "x": 200, "y": 400 }
 POST /swipe    { "fromX": 200, "fromY": 600, "toX": 200, "toY": 200 }
 POST /input    { "text": "Hello" }
@@ -107,7 +107,7 @@ idc ui screenshot [-o file] [--udid <udid>]
 idc ui tap <x> <y> [--udid <udid>]
 idc ui swipe <x1> <y1> <x2> <y2> [--udid <udid>]
 idc ui input <text> [--udid <udid>]
-idc ui hierarchy [--json] [--udid <udid>]
+idc describe-ui [--json] [--udid <udid>]
 
 # 系統功能
 idc system openurl <url> [--udid <udid>]
