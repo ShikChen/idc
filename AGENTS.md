@@ -3,6 +3,7 @@
 ## Commit 規範
 
 - 所有 commit 必須符合 Conventional Commits 格式（例如：`feat: ...`、`fix: ...`、`docs: ...`、`test: ...`）
+- commit message 必須包含 body，且以 bullet points 描述本次變更內容
 
 ## 注意事項
 

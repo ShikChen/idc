@@ -6,6 +6,7 @@
 
 import ArgumentParser
 import Foundation
+import Subprocess
 
 @main
 struct Idc: AsyncParsableCommand {
@@ -23,7 +24,7 @@ struct Server: ParsableCommand {
     )
 }
 
-struct Start: ParsableCommand {
+struct Start: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         abstract: "Start idc-server on a booted simulator (keep-alive test)"
     )
@@ -31,9 +32,9 @@ struct Start: ParsableCommand {
     @Option(name: .long, help: "Booted simulator UDID to target.")
     var udid: String?
 
-    mutating func run() throws {
+    mutating func run() async throws {
         let projectURL = try locateServerProject()
-        let device = try resolveBootedDevice(selectedUDID: udid)
+        let device = try await resolveBootedDevice(selectedUDID: udid)
 
         let destination = "platform=iOS Simulator,id=\(device.udid)"
         let args = [
@@ -44,7 +45,7 @@ struct Start: ParsableCommand {
             "-only-testing:idc-serverUITests/ServerKeepAliveTests/testServerKeepAlive"
         ]
 
-        try runStreamingProcess("xcodebuild", args)
+        try await runStreamingCommand("xcodebuild", args)
     }
 }
 
@@ -95,8 +96,8 @@ private struct SimDevice: Decodable {
     let isAvailable: Bool?
 }
 
-private func resolveBootedDevice(selectedUDID: String?) throws -> SimDevice {
-    let data = try runProcess("/usr/bin/xcrun", ["simctl", "list", "devices", "booted", "--json"])
+private func resolveBootedDevice(selectedUDID: String?) async throws -> SimDevice {
+    let data = try await runCommand("xcrun", ["simctl", "list", "devices", "booted", "--json"])
     let decoded = try JSONDecoder().decode(SimctlList.self, from: data)
     let devices = decoded.devices.values.flatMap { $0 }
 
@@ -136,51 +137,42 @@ private func locateServerProject() throws -> URL {
     throw ValidationError("Unable to locate idc-server.xcodeproj. Run from repo root or idc-cli.")
 }
 
-private func runProcess(_ launchPath: String, _ arguments: [String]) throws -> Data {
-    let process = makeProcess(launchPath, arguments)
+private func runCommand(_ command: String, _ arguments: [String]) async throws -> Data {
+    let result = try await run(
+        .name(command),
+        arguments: Arguments(arguments),
+        output: .bytes(limit: 2 * 1024 * 1024),
+        error: .string(limit: 32 * 1024)
+    )
 
-    let stdout = Pipe()
-    let stderr = Pipe()
-    process.standardOutput = stdout
-    process.standardError = stderr
-
-    try process.run()
-    process.waitUntilExit()
-
-    let outData = stdout.fileHandleForReading.readDataToEndOfFile()
-    let errData = stderr.fileHandleForReading.readDataToEndOfFile()
-
-    if process.terminationStatus != 0 {
-        let message = String(data: errData, encoding: .utf8) ?? "Unknown error"
-        throw ValidationError("Command failed: \(message)")
-    }
-
-    return outData
-}
-
-private func runStreamingProcess(_ launchPath: String, _ arguments: [String]) throws {
-    let process = makeProcess(launchPath, arguments)
-    process.standardOutput = FileHandle.standardOutput
-    process.standardError = FileHandle.standardError
-
-    try process.run()
-    process.waitUntilExit()
-
-    if process.terminationStatus != 0 {
-        throw ValidationError("xcodebuild failed with exit code \(process.terminationStatus).")
+    switch result.terminationStatus {
+    case .exited(let code) where code == 0:
+        return Data(result.standardOutput)
+    case .exited(let code):
+        let stderr = result.standardError ?? ""
+        throw ValidationError("Command failed (\(command)) exit code \(code): \(stderr)")
+    case .unhandledException(let code):
+        let stderr = result.standardError ?? ""
+        throw ValidationError("Command failed (\(command)) unhandled exception \(code): \(stderr)")
     }
 }
 
-private func makeProcess(_ command: String, _ arguments: [String]) -> Process {
-    let process = Process()
-    if command.contains("/") {
-        process.executableURL = URL(fileURLWithPath: command)
-        process.arguments = arguments
-    } else {
-        process.executableURL = URL(fileURLWithPath: "/usr/bin/env")
-        process.arguments = [command] + arguments
+private func runStreamingCommand(_ command: String, _ arguments: [String]) async throws {
+    let result = try await run(
+        .name(command),
+        arguments: Arguments(arguments),
+        output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
+        error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false)
+    )
+
+    switch result.terminationStatus {
+    case .exited(let code) where code == 0:
+        return
+    case .exited(let code):
+        throw ValidationError("\(command) failed with exit code \(code).")
+    case .unhandledException(let code):
+        throw ValidationError("\(command) failed with unhandled exception \(code).")
     }
-    return process
 }
 
 private struct HealthResponse: Decodable {
