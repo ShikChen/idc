@@ -107,9 +107,16 @@ private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool
         return
     }
 
+    let childrenToRender = flattenedChildren(for: node, isRoot: isRoot)
+        .filter { !shouldSkipLeaf($0) }
+
+    if !isRoot, !hasValueLike(node), childrenToRender.isEmpty {
+        return
+    }
+
     let indent = String(repeating: "  ", count: depth)
     print(indent + describeLine(for: node))
-    for child in flattenedChildren(for: node, isRoot: isRoot) {
+    for child in childrenToRender {
         renderDescribeTree(child, depth: depth + 1, isRoot: false)
     }
 }
@@ -191,8 +198,12 @@ private func shouldFlattenNode(_ node: DescribeUINode, parent: DescribeUINode) -
     guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
         return false
     }
-    guard isSameFrame(node.frame, parent.frame) else { return false }
     return true
+}
+
+private func shouldSkipLeaf(_ node: DescribeUINode) -> Bool {
+    guard node.children.isEmpty else { return false }
+    return !hasValueLike(node)
 }
 
 private func hasValueLike(_ node: DescribeUINode) -> Bool {
