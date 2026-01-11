@@ -122,7 +122,8 @@ private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool
 }
 
 private func describeLine(for node: DescribeUINode) -> String {
-    var parts: [String] = [node.elementType]
+    let head = String(format: "%@@(%.0f,%.0f,%.0f,%.0f)", node.elementType, node.frame.x, node.frame.y, node.frame.width, node.frame.height)
+    var parts: [String] = [head]
     if !node.label.isEmpty {
         parts.append("label=\"\(escapeValue(node.label))\"")
     }
@@ -132,7 +133,6 @@ private func describeLine(for node: DescribeUINode) -> String {
     if !node.identifier.isEmpty {
         parts.append("identifier=\"\(escapeValue(node.identifier))\"")
     }
-    parts.append(String(format: "frame=(%.1f,%.1f,%.1f,%.1f)", node.frame.x, node.frame.y, node.frame.width, node.frame.height))
     if node.hasFocus {
         parts.append("hasFocus=true")
     }
