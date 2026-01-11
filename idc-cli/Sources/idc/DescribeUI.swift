@@ -117,9 +117,15 @@ private func describeLine(for node: DescribeUINode) -> String {
         parts.append("identifier=\"\(escapeValue(node.identifier))\"")
     }
     parts.append(String(format: "frame=(%.1f,%.1f,%.1f,%.1f)", node.frame.x, node.frame.y, node.frame.width, node.frame.height))
-    parts.append("hasFocus=\(node.hasFocus)")
-    parts.append("isEnabled=\(node.isEnabled)")
-    parts.append("isSelected=\(node.isSelected)")
+    if node.hasFocus {
+        parts.append("hasFocus=true")
+    }
+    if !node.isEnabled {
+        parts.append("isEnabled=false")
+    }
+    if node.isSelected {
+        parts.append("isSelected=true")
+    }
     return parts.joined(separator: " ")
 }
 
