@@ -98,10 +98,19 @@ private enum JSONValue: Decodable {
 }
 
 private func renderDescribeTree(_ node: DescribeUINode, depth: Int) {
+    renderDescribeTree(node, depth: depth, isRoot: true)
+}
+
+private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool) {
+    if !isRoot, let child = simplifiableChild(for: node) {
+        renderDescribeTree(child, depth: depth, isRoot: false)
+        return
+    }
+
     let indent = String(repeating: "  ", count: depth)
     print(indent + describeLine(for: node))
     for child in node.children {
-        renderDescribeTree(child, depth: depth + 1)
+        renderDescribeTree(child, depth: depth + 1, isRoot: false)
     }
 }
 
@@ -136,4 +145,40 @@ private func escapeValue(_ value: String) -> String {
     escaped = escaped.replacingOccurrences(of: "\r", with: "\\r")
     escaped = escaped.replacingOccurrences(of: "\t", with: "\\t")
     return escaped
+}
+
+private func simplifiableChild(for node: DescribeUINode) -> DescribeUINode? {
+    guard node.children.count == 1, let child = node.children.first else {
+        return nil
+    }
+    guard !hasValueLike(node) else {
+        return nil
+    }
+    guard !hasValueLike(child) else {
+        return nil
+    }
+    guard isSameShape(node, child) else {
+        return nil
+    }
+    return child
+}
+
+private func hasValueLike(_ node: DescribeUINode) -> Bool {
+    if !node.label.isEmpty { return true }
+    if !node.title.isEmpty { return true }
+    if !node.identifier.isEmpty { return true }
+    if node.placeholderValue != nil { return true }
+    if node.value != nil { return true }
+    return false
+}
+
+private func isSameShape(_ lhs: DescribeUINode, _ rhs: DescribeUINode) -> Bool {
+    return lhs.elementType == rhs.elementType &&
+        lhs.hasFocus == rhs.hasFocus &&
+        lhs.isEnabled == rhs.isEnabled &&
+        lhs.isSelected == rhs.isSelected &&
+        lhs.frame.x == rhs.frame.x &&
+        lhs.frame.y == rhs.frame.y &&
+        lhs.frame.width == rhs.frame.width &&
+        lhs.frame.height == rhs.frame.height
 }
