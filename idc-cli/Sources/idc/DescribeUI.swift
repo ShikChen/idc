@@ -109,7 +109,7 @@ private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool
 
     let indent = String(repeating: "  ", count: depth)
     print(indent + describeLine(for: node))
-    for child in node.children {
+    for child in flattenedChildren(for: node, isRoot: isRoot) {
         renderDescribeTree(child, depth: depth + 1, isRoot: false)
     }
 }
@@ -163,6 +163,38 @@ private func simplifiableChild(for node: DescribeUINode) -> DescribeUINode? {
     return child
 }
 
+private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [DescribeUINode] {
+    guard !isRoot else {
+        return node.children
+    }
+    var flattened: [DescribeUINode] = node.children
+    var didChange = true
+    while didChange {
+        didChange = false
+        var next: [DescribeUINode] = []
+        for child in flattened {
+            if shouldFlattenNode(child, parent: node) {
+                next.append(contentsOf: child.children)
+                didChange = true
+            } else {
+                next.append(child)
+            }
+        }
+        flattened = next
+    }
+    return flattened
+}
+
+private func shouldFlattenNode(_ node: DescribeUINode, parent: DescribeUINode) -> Bool {
+    guard node.elementType == "other" else { return false }
+    guard !hasValueLike(node) else { return false }
+    guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
+        return false
+    }
+    guard isSameFrame(node.frame, parent.frame) else { return false }
+    return true
+}
+
 private func hasValueLike(_ node: DescribeUINode) -> Bool {
     if !node.label.isEmpty { return true }
     if !node.title.isEmpty { return true }
@@ -177,8 +209,12 @@ private func isSameShape(_ lhs: DescribeUINode, _ rhs: DescribeUINode) -> Bool {
         lhs.hasFocus == rhs.hasFocus &&
         lhs.isEnabled == rhs.isEnabled &&
         lhs.isSelected == rhs.isSelected &&
-        lhs.frame.x == rhs.frame.x &&
-        lhs.frame.y == rhs.frame.y &&
-        lhs.frame.width == rhs.frame.width &&
-        lhs.frame.height == rhs.frame.height
+        isSameFrame(lhs.frame, rhs.frame)
+}
+
+private func isSameFrame(_ lhs: Frame, _ rhs: Frame) -> Bool {
+    return lhs.x == rhs.x &&
+        lhs.y == rhs.y &&
+        lhs.width == rhs.width &&
+        lhs.height == rhs.height
 }
