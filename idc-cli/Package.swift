@@ -22,5 +22,9 @@ let package = Package(
                 .product(name: "Subprocess", package: "swift-subprocess"),
             ]
         ),
+        .testTarget(
+            name: "idcTests",
+            dependencies: ["idc"]
+        ),
     ]
 )
