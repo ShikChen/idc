@@ -1,0 +1,32 @@
+{
+  "configurations" : [
+    {
+      "id" : "C582BBA8-F400-4673-83C9-0F3E6FFAB621",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+    "environmentVariableEntries" : [
+      {
+        "key" : "IDC_KEEP_ALIVE",
+        "value" : "1"
+      }
+    ]
+  },
+  "testTargets" : [
+    {
+      "selectedTests" : [
+        "ServerKeepAliveTests\/testServerKeepAlive()"
+      ],
+      "target" : {
+        "containerPath" : "container:idc-server.xcodeproj",
+        "identifier" : "D7DC13352F123D990006F954",
+        "name" : "idc-serverUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

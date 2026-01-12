@@ -1,0 +1,35 @@
+{
+  "configurations" : [
+    {
+      "id" : "DFEE1BD4-9996-41D8-A264-21333ED1ABAD",
+      "name" : "Configuration 1",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:idc-server.xcodeproj",
+        "identifier" : "D7DC132B2F123D990006F954",
+        "name" : "idc-serverTests"
+      }
+    },
+    {
+      "skippedTests" : [
+        "ServerKeepAliveTests",
+        "ServerKeepAliveTests\/testServerKeepAlive()"
+      ],
+      "target" : {
+        "containerPath" : "container:idc-server.xcodeproj",
+        "identifier" : "D7DC13352F123D990006F954",
+        "name" : "idc-serverUITests"
+      }
+    }
+  ],
+  "version" : 1
+}

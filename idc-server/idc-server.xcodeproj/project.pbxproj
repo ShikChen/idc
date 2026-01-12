@@ -31,6 +31,8 @@
 		D7DC131F2F123D990006F954 /* idc-server.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "idc-server.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7DC132C2F123D990006F954 /* idc-serverTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "idc-serverTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		D7DC13362F123D990006F954 /* idc-serverUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "idc-serverUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		D7DC13A82F15810A0006F954 /* idc-server-keep-alive.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "idc-server-keep-alive.xctestplan"; path = "../idc-server-keep-alive.xctestplan"; sourceTree = "<group>"; };
+		D7DC13A92F1581B40006F954 /* idc-server.xctestplan */ = {isa = PBXFileReference; lastKnownFileType = text; name = "idc-server.xctestplan"; path = "../idc-server.xctestplan"; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -80,6 +82,8 @@
 		D7DC13162F123D990006F954 = {
 			isa = PBXGroup;
 			children = (
+				D7DC13A92F1581B40006F954 /* idc-server.xctestplan */,
+				D7DC13A82F15810A0006F954 /* idc-server-keep-alive.xctestplan */,
 				D7DC13212F123D990006F954 /* idc-server */,
 				D7DC132F2F123D990006F954 /* idc-serverTests */,
 				D7DC13392F123D990006F954 /* idc-serverUITests */,
