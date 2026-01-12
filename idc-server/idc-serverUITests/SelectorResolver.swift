@@ -23,6 +23,7 @@ enum SelectorError: LocalizedError {
 
 private enum CandidateSet {
     case query(XCUIElementQuery)
+    case queryAndSelf(query: XCUIElementQuery, selfElement: XCUIElement)
     case elements([XCUIElement])
 
     func elements() -> [XCUIElement] {
@@ -31,6 +32,8 @@ private enum CandidateSet {
             return elements
         case let .query(query):
             return query.allElementsBoundByIndex
+        case let .queryAndSelf(query, selfElement):
+            return [selfElement] + query.allElementsBoundByIndex
         }
     }
 }
@@ -95,8 +98,8 @@ private func convertAxis(_ axis: Axis) -> ResolvedAxis {
 private func initialCandidates(axis: ResolvedAxis, base: XCUIElement) -> CandidateSet {
     switch axis {
     case .descendantOrSelf:
-        let descendants = base.descendants(matching: .any).allElementsBoundByIndex
-        return .elements([base] + descendants)
+        let query = base.descendants(matching: .any)
+        return .queryAndSelf(query: query, selfElement: base)
     case .descendant:
         return .query(base.descendants(matching: .any))
     case .child:
@@ -120,10 +123,12 @@ private func apply(_ op: SelectorOp, to set: CandidateSet, base: XCUIElement) th
         guard let elementType = elementTypeFromName(name) else {
             throw SelectorError.invalidType(name)
         }
-        let elements = set.elements().filter { element in
+        let predicate = predicateForElementType(elementType)
+        return applyQueryOrFilter(set) { query in
+            query.matching(predicate)
+        } elementFilter: { element in
             element.elementType == elementType
         }
-        return .elements(elements)
     case let .subscriptValue(value, caseFlag):
         let predicate = predicateForSubscript(value, caseFlag: caseFlag)
         return applyQueryOrFilter(set) { query in
@@ -207,6 +212,12 @@ private func applyQueryOrFilter(
     switch set {
     case let .query(query):
         return .query(queryTransform(query))
+    case let .queryAndSelf(query, selfElement):
+        let nextQuery = queryTransform(query)
+        if elementFilter(selfElement) {
+            return .queryAndSelf(query: nextQuery, selfElement: selfElement)
+        }
+        return .query(nextQuery)
     case let .elements(elements):
         return .elements(elements.filter(elementFilter))
     }
