@@ -131,6 +131,39 @@ actor TestServer {
                 )
             }
         }
+        await server.appendRoute("/tap", for: [.POST]) { request in
+            do {
+                let tapRequest = try JSONDecoder().decode(TapRequest.self, from: await request.bodyData)
+                guard let selector = tapRequest.selector else {
+                    throw SelectorError.invalidQuery("Missing selector.")
+                }
+                let response = try await MainActor.run {
+                    guard let app = RunningApp.getForegroundApp() else {
+                        throw SelectorError.invalidQuery("No foreground app found.")
+                    }
+                    let matches = try resolveSelector(selector, from: app)
+                    guard !matches.isEmpty else {
+                        throw SelectorError.noMatches
+                    }
+                    let selected = TapElement(from: matches[0])
+                    return TapResponse(matched: matches.count, selected: selected)
+                }
+                let body = try JSONEncoder().encode(response)
+                return HTTPResponse(
+                    statusCode: .ok,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            } catch {
+                let message = error.localizedDescription
+                let body = try JSONEncoder().encode(ErrorResponse(error: message))
+                return HTTPResponse(
+                    statusCode: .badRequest,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            }
+        }
         routesConfigured = true
     }
 }

@@ -78,6 +78,9 @@ final class ServerKeepAliveTests: XCTestCase {
     }
 
     func testServerKeepAlive() async throws {
+        guard ProcessInfo.processInfo.environment["IDC_KEEP_ALIVE"] == "1" else {
+            throw XCTSkip("IDC_KEEP_ALIVE not set.")
+        }
         try await Self.server.runForever()
     }
 }

@@ -24,7 +24,8 @@ struct ServerStart: AsyncParsableCommand {
             "-only-testing:idc-serverUITests/ServerKeepAliveTests/testServerKeepAlive"
         ]
 
-        try await runStreamingCommand("xcodebuild", args)
+        let environment = Environment.inherit.updating(["IDC_KEEP_ALIVE": "1"])
+        try await runStreamingCommand("xcodebuild", args, environment: environment)
     }
 }
 
@@ -100,10 +101,11 @@ private func runCommand(_ command: String, _ arguments: [String]) async throws -
     }
 }
 
-private func runStreamingCommand(_ command: String, _ arguments: [String]) async throws {
+private func runStreamingCommand(_ command: String, _ arguments: [String], environment: Environment = .inherit) async throws {
     let result = try await run(
         .name(command),
         arguments: Arguments(arguments),
+        environment: environment,
         output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
         error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false)
     )
