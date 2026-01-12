@@ -3,6 +3,7 @@ import SwiftUI
 struct TestFixtureView: View {
     @State private var email: String = "hello"
     @State private var featureEnabled: Bool = true
+    @State private var tapCount: Int = 0
 
     var body: some View {
         VStack(spacing: 12) {
@@ -10,6 +11,14 @@ struct TestFixtureView: View {
                 .accessibilityIdentifier("root-title")
 
             FixtureLabelView(text: "Fixture Label", identifier: "fixture-label")
+
+            Text("Tap Count: \(tapCount)")
+                .accessibilityIdentifier("tap-count")
+
+            Button("Tap Me") {
+                tapCount += 1
+            }
+            .accessibilityIdentifier("tap-button")
 
             VStack(spacing: 8) {
                 Button("Primary") {}
@@ -44,7 +53,6 @@ struct TestFixtureView: View {
 
             DisabledSwitchView(label: "Disabled Switch", identifier: "disabled-switch")
         }
-        .disabled(true)
         .padding()
         .accessibilityIdentifier("root")
         .accessibilityElement(children: .contain)

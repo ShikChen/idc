@@ -3,7 +3,7 @@ import Foundation
 
 struct Tap: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Tap a UI element (debug: print parsed selector)."
+        abstract: "Tap a UI element."
     )
 
     @Argument(help: "Selector DSL (optional).")
@@ -12,7 +12,13 @@ struct Tap: AsyncParsableCommand {
     @Option(name: .long, help: "Tap point x,y or x%,y% (optional).")
     var at: String?
 
-    mutating func run() throws {
+    @Option(name: .long, help: "Expected simulator UDID (optional).")
+    var udid: String?
+
+    @Option(name: .long, help: "Request timeout in seconds.")
+    var timeout: Double = 5
+
+    mutating func run() async throws {
         if selector == nil && at == nil {
             throw ValidationError("Provide a selector or --at.")
         }
@@ -37,21 +43,23 @@ struct Tap: AsyncParsableCommand {
             point = nil
         }
 
-        let output = TapDebugOutput(selector: program, at: point)
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.prettyPrinted, .sortedKeys]
-        let data = try encoder.encode(output)
-        if let string = String(data: data, encoding: .utf8) {
-            print(string)
-        } else {
-            throw ValidationError("Unable to encode output.")
+        if let udid {
+            let info: InfoResponse = try await fetchJSON(path: "/info", timeout: timeout)
+            if info.udid != udid {
+                let actual = info.udid ?? "nil"
+                throw ValidationError("Server is running for a different simulator. Expected \(udid), got \(actual).")
+            }
+        }
+
+        let request = TapRequest(selector: program, at: point)
+        let (data, response) = try await postJSON(path: "/tap", body: request, timeout: timeout)
+        guard response.statusCode == 200 else {
+            if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                throw ValidationError(error.error)
+            }
+            throw ValidationError("Tap failed with HTTP \(response.statusCode).")
         }
     }
-}
-
-struct TapDebugOutput: Encodable {
-    let selector: SelectorProgram?
-    let at: TapPoint?
 }
 
 enum TapPointSpace: String, Encodable {
@@ -106,4 +114,13 @@ private func parsePointComponent(_ raw: String) throws -> PointComponent {
         throw TapParseError.invalidNumber(numberText)
     }
     return PointComponent(value: value, unit: unit)
+}
+
+struct TapRequest: Encodable {
+    let selector: SelectorProgram?
+    let at: TapPoint?
+}
+
+struct ErrorResponse: Decodable {
+    let error: String
 }

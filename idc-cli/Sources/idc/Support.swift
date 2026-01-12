@@ -34,3 +34,22 @@ func fetchData(path: String, timeout: TimeInterval) async throws -> Data {
         task.resume()
     }
 }
+
+func postJSON<T: Encodable>(path: String, body: T, timeout: TimeInterval) async throws -> (Data, HTTPURLResponse) {
+    let url = URL(string: "http://127.0.0.1:8080\(path)")!
+    var request = URLRequest(url: url)
+    request.httpMethod = "POST"
+    request.timeoutInterval = timeout
+    request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+    request.httpBody = try JSONEncoder().encode(body)
+
+    do {
+        let (data, response) = try await URLSession.shared.data(for: request)
+        guard let httpResponse = response as? HTTPURLResponse else {
+            throw URLError(.badServerResponse)
+        }
+        return (data, httpResponse)
+    } catch {
+        throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+    }
+}

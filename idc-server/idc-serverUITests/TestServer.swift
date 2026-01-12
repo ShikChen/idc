@@ -134,19 +134,23 @@ actor TestServer {
         await server.appendRoute("/tap", for: [.POST]) { request in
             do {
                 let tapRequest = try JSONDecoder().decode(TapRequest.self, from: await request.bodyData)
-                guard let selector = tapRequest.selector else {
-                    throw SelectorError.invalidQuery("Missing selector.")
-                }
                 let response = try await MainActor.run {
                     guard let app = RunningApp.getForegroundApp() else {
                         throw SelectorError.invalidQuery("No foreground app found.")
                     }
-                    let matches = try resolveSelector(selector, from: app)
-                    guard !matches.isEmpty else {
-                        throw SelectorError.noMatches
+                    let matches: [XCUIElement]
+                    if let selector = tapRequest.selector {
+                        matches = try resolveSelector(selector, from: app)
+                        guard !matches.isEmpty else {
+                            throw SelectorError.noMatches
+                        }
+                    } else {
+                        matches = []
                     }
-                    let selected = TapElement(from: matches[0])
-                    return TapResponse(matched: matches.count, selected: selected)
+                    let selected = matches.first
+                    try performTap(app: app, element: selected, point: tapRequest.at)
+                    let tapped = selected.map { TapElement(from: $0) }
+                    return TapResponse(matched: matches.count, selected: tapped)
                 }
                 let body = try JSONEncoder().encode(response)
                 return HTTPResponse(
@@ -165,5 +169,60 @@ actor TestServer {
             }
         }
         routesConfigured = true
+    }
+}
+
+private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapPoint?) throws {
+    if let point {
+        switch point.space {
+        case .screen:
+            let screenPoint = resolveScreenPoint(point.point)
+            tapScreen(app: app, point: screenPoint)
+        case .element:
+            guard let element else {
+                throw SelectorError.invalidQuery("Missing selector for element-local tap.")
+            }
+            tapElement(element: element, point: point.point)
+        }
+        return
+    }
+
+    guard let element else {
+        throw SelectorError.invalidQuery("Missing selector or tap point.")
+    }
+    let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
+    center.tap()
+}
+
+private func tapElement(element: XCUIElement, point: PointSpec) {
+    let size = element.frame.size
+    let x = resolvePointComponent(point.x, size: size.width)
+    let y = resolvePointComponent(point.y, size: size.height)
+    let origin = element.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+    origin.withOffset(CGVector(dx: x, dy: y)).tap()
+}
+
+private func tapScreen(app: XCUIApplication, point: CGPoint) {
+    let origin = app.coordinate(withNormalizedOffset: CGVector(dx: 0, dy: 0))
+    let offset = CGVector(
+        dx: point.x - app.frame.minX,
+        dy: point.y - app.frame.minY
+    )
+    origin.withOffset(offset).tap()
+}
+
+private func resolveScreenPoint(_ point: PointSpec) -> CGPoint {
+    let screenSize = XCUIScreen.main.screenshot().image.size
+    let x = resolvePointComponent(point.x, size: screenSize.width)
+    let y = resolvePointComponent(point.y, size: screenSize.height)
+    return CGPoint(x: x, y: y)
+}
+
+private func resolvePointComponent(_ component: PointComponent, size: CGFloat) -> CGFloat {
+    switch component.unit {
+    case .pt:
+        return component.value
+    case .pct:
+        return (component.value / 100.0) * size
     }
 }

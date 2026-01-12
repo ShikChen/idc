@@ -25,11 +25,13 @@ final class TapEndpointTests: XCTestCase {
     func testTapByIdentifier() async throws {
         let selector = SelectorProgram(steps: [
             SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s)
+                .attrString(field: .identifier, match: .eq, value: "tap-button", caseFlag: .s)
             ])
         ])
+        try await assertTapCount("Tap Count: 0")
         let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "root")
+        XCTAssertEqual(response.selected?.identifier, "tap-button")
+        try await waitForTapCount("Tap Count: 1")
     }
 
     func testTapDescendantCombinator() async throws {
@@ -38,11 +40,13 @@ final class TapEndpointTests: XCTestCase {
                 .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s)
             ]),
             SelectorStep(axis: .descendant, ops: [
-                .attrString(field: .identifier, match: .eq, value: "button-group", caseFlag: .s)
+                .attrString(field: .identifier, match: .eq, value: "tap-button", caseFlag: .s)
             ])
         ])
+        try await assertTapCount("Tap Count: 0")
         let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "button-group")
+        XCTAssertEqual(response.selected?.identifier, "tap-button")
+        try await waitForTapCount("Tap Count: 1")
     }
 
     func testTapChildCombinator() async throws {
@@ -150,12 +154,12 @@ final class TapEndpointTests: XCTestCase {
     func testTapDisabled() async throws {
         let selector = SelectorProgram(steps: [
             SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s),
+                .attrString(field: .identifier, match: .eq, value: "disabled-button", caseFlag: .s),
                 .attrBool(field: .isEnabled, value: false)
             ])
         ])
         let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "root")
+        XCTAssertEqual(response.selected?.identifier, "disabled-button")
     }
 
     private func postTap(_ selector: SelectorProgram) async throws -> (TapResponse, HTTPURLResponse) {
@@ -171,10 +175,31 @@ final class TapEndpointTests: XCTestCase {
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = TapRequest(selector: selector)
+        let body = TapRequest(selector: selector, at: nil)
         request.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
         return (data, httpResponse)
+    }
+
+    private func assertTapCount(_ expected: String) async throws {
+        await MainActor.run {
+            let app = XCUIApplication()
+            let label = app.staticTexts["tap-count"]
+            XCTAssertTrue(label.waitForExistence(timeout: 2))
+            XCTAssertEqual(label.label, expected)
+        }
+    }
+
+    private func waitForTapCount(_ expected: String) async throws {
+        await MainActor.run {
+            let app = XCUIApplication()
+            let label = app.staticTexts["tap-count"]
+            XCTAssertTrue(label.waitForExistence(timeout: 2))
+            let predicate = NSPredicate(format: "label == %@", expected)
+            let exp = XCTNSPredicateExpectation(predicate: predicate, object: label)
+            let result = XCTWaiter.wait(for: [exp], timeout: 2)
+            XCTAssertEqual(result, .completed)
+        }
     }
 }

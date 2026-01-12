@@ -3,11 +3,22 @@ import XCTest
 
 struct TapRequest: Codable {
     let selector: SelectorProgram?
+    let at: TapPoint?
 }
 
 struct TapResponse: Codable {
     let matched: Int
     let selected: TapElement?
+}
+
+enum TapPointSpace: String, Codable {
+    case element
+    case screen
+}
+
+struct TapPoint: Codable {
+    let space: TapPointSpace
+    let point: PointSpec
 }
 
 struct TapElement: Codable {
