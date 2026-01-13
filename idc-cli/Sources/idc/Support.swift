@@ -18,21 +18,8 @@ func fetchData(path: String, timeout: TimeInterval) async throws -> Data {
     let url = URL(string: "http://127.0.0.1:8080\(path)")!
     var request = URLRequest(url: url)
     request.timeoutInterval = timeout
-
-    return try await withCheckedThrowingContinuation { continuation in
-        let task = URLSession.shared.dataTask(with: request) { data, _, error in
-            if let error {
-                continuation.resume(throwing: error)
-                return
-            }
-            guard let data else {
-                continuation.resume(throwing: URLError(.badServerResponse))
-                return
-            }
-            continuation.resume(returning: data)
-        }
-        task.resume()
-    }
+    let (data, _) = try await URLSession.shared.data(for: request)
+    return data
 }
 
 func postJSON<T: Encodable>(path: String, body: T, timeout: TimeInterval) async throws -> (Data, HTTPURLResponse) {

@@ -84,7 +84,17 @@
 - Fixed race condition where stop request was lost if SIGINT arrived before subprocess started
 - `requestStop()` now sets `stopRequested = true` before returning when execution is nil
 
-## Sources/idc/Support.swift
+## Sources/idc/Support.swift ✓
+
+### TODO
+
+- [x] Use async URLSession API in `fetchData` instead of `withCheckedThrowingContinuation`
+
+### Summary
+
+- Simplified `fetchData` by using native async URLSession API
+- Removed manual `withCheckedThrowingContinuation` wrapper
+- Now consistent with `postJSON` which already uses async URLSession
 
 ## Sources/idc/Tap.swift
 
