@@ -41,6 +41,14 @@ final class SelectorDSLTests: XCTestCase {
             .descendants(type: "button")
         ))
     }
+    func testDescendantWithoutType() throws {
+        let program = try compile(#"toolbar ["OK"]"#)
+        XCTAssertEqual(program, plan(
+            .descendants(type: "toolbar"),
+            .descendants(type: "any"),
+            .matchIdentifier("OK")
+        ))
+    }
 
     func testShorthandCaseSensitive() throws {
         let program = try compile(#"["Settings"]"#)

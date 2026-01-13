@@ -257,7 +257,7 @@ struct SelectorParser {
             let whitespaceStart = index
             let hadWhitespace = skipWhitespace()
             guard let char = peek() else { break }
-            if hadWhitespace, isIdentStart(char) || char == ">" {
+            if hadWhitespace, isStepStart(char) || char == ">" {
                 index = whitespaceStart
                 break
             }
