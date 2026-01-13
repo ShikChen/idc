@@ -9,7 +9,7 @@ This document defines the selector DSL and CLI behavior for `idc tap`.
 ```
 selector := step (combinator step)*
 combinator := " " | ">"
-step := [type] filter* pick?
+step := (type filter* | filter+) pick?
 
 type := elementTypeName
 
@@ -19,17 +19,21 @@ pick := indexPick | onlyPick
 attrFilter := "[" attrName attrOp string caseFlag? "]"
             | "[" boolAttr ("=" bool)? "]"
             | "[!" boolAttr "]"
-textFilter := '["' text '"' caseFlag? ']'
+textFilter := "[" string caseFlag? "]"
 hasFilter := ":has(" simpleStep ")"
 isFilter := ":is(" simpleStep ("," simpleStep)* ")"
 notFilter := ":not(" simpleStep ")"
-predicateFilter := ':predicate("' predicate '")'
+predicateFilter := ":predicate(" string ")"
 
 indexPick := "[" integer "]"
 onlyPick := ":only"
 
-simpleStep := [type] simpleFilter+
+simpleStep := type simpleFilter* | simpleFilter+
 simpleFilter := attrFilter | textFilter | isFilter | notFilter | predicateFilter
+
+caseFlag := "i" | "s"
+string := '"' (char | escape)* '"'
+escape := "\\" ("\"" | "\\" | "n" | "t" | "r")
 ```
 
 - Space (` `) means **descendants**.
@@ -44,6 +48,7 @@ Each step produces either:
 - a **single element** (`XCUIElement`) when `:only` or `[index]` is used.
 
 Steps after a picker operate relative to that selected element.
+If the final selector resolves to a query, `idc tap` uses the **first match**.
 
 ### 3) String filters
 
@@ -75,6 +80,10 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 - `value` is matched as a **string** (non-string values are stringified).
 - All filters inside the same step are ANDed into a single predicate.
 
+**String escaping**
+- Strings use double quotes.
+- Escape sequences: `\"`, `\\`, `\n`, `\t`, `\r`.
+
 ### 4) Bool filters
 
 ```
@@ -102,6 +111,7 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 ```
 
 **simpleStep** = one step with optional type + filters, **no combinators** and **no pickers**.
+Type-only `simpleStep` is allowed (example: `:has(button)`).
 
 Semantics:
 - `:is(...)` ORs the predicates of its `simpleStep` list.
@@ -167,7 +177,7 @@ button:only
 ### Accessing matched elements
 
 - `count`
-  - used by negative index; `:only` avoids `count` and avoids `query.element` (which fails tests on non-unique)
+  - used by negative index
 
 - `element(boundBy:)` / `element(at:)`
   - `[index]`
@@ -198,6 +208,13 @@ Whenever possible, use specialized XCUI APIs:
 - `containing(type, identifier:)` for `type:has(type["text"])` (exact, case-sensitive)
 
 All other cases use `matching(NSPredicate)`.
+
+---
+
+## Implementation notes
+
+- `:only` should **not** use `query.element`, because it fails the XCTest on non-unique results.
+- Prefer `firstMatch.exists` + `element(boundBy: 1).exists` to enforce uniqueness without full `count`.
 
 ---
 
@@ -246,7 +263,7 @@ The server executes the plan without re-parsing DSL semantics.
   - `element(boundBy:)` (negative index uses `count` first)
 
 - `pickOnly`
-  - preferred: `firstMatch.exists` + `element(boundBy: 1).exists` (avoids `count` and avoids `query.element` test-fail)
+  - preferred: `firstMatch.exists` + `element(boundBy: 1).exists`
 
 ---
 
