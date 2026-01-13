@@ -38,7 +38,17 @@
 
 - Removed Swift/ArgumentParser documentation URL comments from file header
 
-## Sources/idc/Screenshot.swift
+## Sources/idc/Screenshot.swift ✓
+
+### TODO
+
+- (No changes needed - file is already clean)
+
+### Summary
+
+- Reviewed file; no refactoring required
+- Code is well-structured with clear responsibility
+- Existing TODO comment is a valid future enhancement (simctl integration)
 
 ## Sources/idc/SelectorDSL.swift
 
