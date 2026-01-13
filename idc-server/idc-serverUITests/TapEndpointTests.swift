@@ -8,10 +8,11 @@ final class TapEndpointTests: XCTestCase {
         try await Self.server.start()
         let isRunning = await MainActor.run {
             let app = XCUIApplication()
-            if app.state != .notRunning {
-                app.terminate()
+            if app.state == .notRunning {
+                app.launch()
+            } else {
+                app.activate()
             }
-            app.launch()
             return app.wait(for: .runningForeground, timeout: 5)
         }
         XCTAssertTrue(isRunning)
@@ -20,6 +21,9 @@ final class TapEndpointTests: XCTestCase {
             let tab = app.tabBars.buttons["Test"]
             XCTAssertTrue(tab.waitForExistence(timeout: 5))
             tab.tap()
+            let reset = app.buttons["Reset Tap Count"]
+            XCTAssertTrue(reset.waitForExistence(timeout: 5))
+            reset.tap()
             let label = app.staticTexts["Tap Count: 0"]
             XCTAssertTrue(label.waitForExistence(timeout: 5))
         }

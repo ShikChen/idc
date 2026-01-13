@@ -20,6 +20,11 @@ struct TestFixtureView: View {
             }
             .accessibilityIdentifier("tap-button")
 
+            Button("Reset Tap Count") {
+                tapCount = 0
+            }
+            .accessibilityIdentifier("reset-button")
+
             VStack(spacing: 8) {
                 Button("Primary") {}
                     .accessibilityIdentifier("primary-button")
