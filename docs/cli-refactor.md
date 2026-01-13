@@ -96,7 +96,16 @@
 - Removed manual `withCheckedThrowingContinuation` wrapper
 - Now consistent with `postJSON` which already uses async URLSession
 
-## Sources/idc/Tap.swift
+## Sources/idc/Tap.swift ✓
+
+### TODO
+
+- (No changes needed - file is already clean)
+
+### Summary
+
+- Reviewed file; no refactoring required
+- Code is well-structured with clear error handling and parsing logic
 
 ## Tests/idcTests/SelectorDSLTests.swift
 
