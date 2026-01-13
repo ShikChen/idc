@@ -5,8 +5,8 @@
 //  Created by Shik Chen on 2026/1/10.
 //
 
-import Foundation
 import FlyingFox
+import Foundation
 import UIKit
 import XCTest
 
@@ -27,11 +27,11 @@ struct ErrorResponse: Codable {
 }
 
 private let isSimulator: Bool = {
-#if targetEnvironment(simulator)
-    return true
-#else
-    return false
-#endif
+    #if targetEnvironment(simulator)
+        return true
+    #else
+        return false
+    #endif
 }()
 
 actor TestServer {
@@ -42,7 +42,7 @@ actor TestServer {
     private var routesConfigured = false
 
     init(port: UInt16 = TestServer.defaultPort) {
-        self.server = HTTPServer(port: port)
+        server = HTTPServer(port: port)
     }
 
     func start() async throws {
@@ -158,7 +158,7 @@ actor TestServer {
 private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResponse {
     let executor = PlanExecutor()
     var lastError: Error?
-    for attempt in 0..<5 {
+    for attempt in 0 ..< 5 {
         do {
             return try await MainActor.run {
                 guard let app = RunningApp.getForegroundApp() else {

@@ -76,7 +76,7 @@ struct FixtureLabelView: UIViewRepresentable {
     let text: String
     let identifier: String
 
-    func makeUIView(context: Context) -> UILabel {
+    func makeUIView(context _: Context) -> UILabel {
         let label = UILabel()
         label.text = text
         label.isAccessibilityElement = true
@@ -85,7 +85,7 @@ struct FixtureLabelView: UIViewRepresentable {
         return label
     }
 
-    func updateUIView(_ uiView: UILabel, context: Context) {
+    func updateUIView(_ uiView: UILabel, context _: Context) {
         uiView.text = text
         uiView.accessibilityLabel = text
         uiView.accessibilityIdentifier = identifier
@@ -96,7 +96,7 @@ struct DisabledSwitchView: UIViewRepresentable {
     let label: String
     let identifier: String
 
-    func makeUIView(context: Context) -> UISwitch {
+    func makeUIView(context _: Context) -> UISwitch {
         let control = UISwitch()
         control.isOn = false
         control.isEnabled = false
@@ -106,7 +106,7 @@ struct DisabledSwitchView: UIViewRepresentable {
         return control
     }
 
-    func updateUIView(_ uiView: UISwitch, context: Context) {
+    func updateUIView(_ uiView: UISwitch, context _: Context) {
         uiView.isEnabled = false
         uiView.accessibilityLabel = label
         uiView.accessibilityIdentifier = identifier

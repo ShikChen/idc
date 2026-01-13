@@ -199,7 +199,7 @@ struct SelectorParser {
     private var index: Int = 0
 
     init(_ input: String) {
-        self.characters = Array(input)
+        characters = Array(input)
     }
 
     mutating func parseSelector() throws -> SelectorAST {
@@ -211,19 +211,19 @@ struct SelectorParser {
         if match(">") {
             throw SelectorParseError.unexpectedCharacter(">", expected: "step")
         }
-        steps.append(try parseStep(axis: .descendant))
+        try steps.append(parseStep(axis: .descendant))
 
         while true {
             let hadWhitespace = skipWhitespace()
             guard let char = peek() else { break }
             if match(">") {
                 skipWhitespace()
-                steps.append(try parseStep(axis: .child))
+                try steps.append(parseStep(axis: .child))
                 continue
             }
             if hadWhitespace {
                 if isStepStart(char) {
-                    steps.append(try parseStep(axis: .descendant))
+                    try steps.append(parseStep(axis: .descendant))
                     continue
                 }
                 break
@@ -257,7 +257,7 @@ struct SelectorParser {
             let whitespaceStart = index
             let hadWhitespace = skipWhitespace()
             guard let char = peek() else { break }
-            if hadWhitespace, (isIdentStart(char) || char == ">") {
+            if hadWhitespace, isIdentStart(char) || char == ">" {
                 index = whitespaceStart
                 break
             }
@@ -282,7 +282,6 @@ struct SelectorParser {
                     }
                     pick = newPick
                     didPick = true
-                    break
                 }
                 didParse = true
                 continue
@@ -302,7 +301,6 @@ struct SelectorParser {
                     }
                     pick = newPick
                     didPick = true
-                    break
                 }
                 didParse = true
                 continue
@@ -547,7 +545,7 @@ struct SelectorParser {
         while let char = peek(), isDigit(char) {
             _ = advance()
         }
-        let value = String(characters[start..<index])
+        let value = String(characters[start ..< index])
         guard let intValue = Int(value) else {
             throw SelectorParseError.invalidNumber(value)
         }
@@ -563,7 +561,7 @@ struct SelectorParser {
         while let char = peek(), isIdentChar(char) {
             _ = advance()
         }
-        return String(characters[start..<index])
+        return String(characters[start ..< index])
     }
 
     private mutating func parseRequiredIdentifier() throws -> String {
@@ -743,7 +741,8 @@ struct SelectorCompiler {
             if let typeName = step.type,
                filters.count == 1,
                case let .shorthand(value, caseFlag) = filters[0],
-               caseFlag == .s {
+               caseFlag == .s
+            {
                 pipeline.removeLast()
                 pipeline.append(axisOperation(step: step, overrideType: "any"))
                 pipeline.append(.matchTypeIdentifier(type: typeName, value: value))
@@ -767,11 +766,11 @@ struct SelectorCompiler {
                 case let .predicate(value):
                     predicateParts.append(value)
                 case let .isMatch(steps):
-                    predicateParts.append(try predicateForIs(steps))
+                    try predicateParts.append(predicateForIs(steps))
                 case let .not(step):
-                    predicateParts.append(try predicateForNot(step))
+                    try predicateParts.append(predicateForNot(step))
                 case let .has(step):
-                    pipeline.append(try compileHas(step))
+                    try pipeline.append(compileHas(step))
                 }
             }
 
@@ -809,7 +808,8 @@ struct SelectorCompiler {
         if let typeName = step.type,
            step.filters.count == 1,
            case let .shorthand(value, caseFlag) = step.filters[0],
-           caseFlag == .s {
+           caseFlag == .s
+        {
             return .containTypeIdentifier(type: typeName, value: value)
         }
         let predicate = try predicateForSimpleStep(step)
@@ -846,9 +846,9 @@ struct SelectorCompiler {
             case let .predicate(value):
                 parts.append(value)
             case let .isMatch(steps):
-                parts.append(try predicateForIs(steps))
+                try parts.append(predicateForIs(steps))
             case let .not(step):
-                parts.append(try predicateForNot(step))
+                try parts.append(predicateForNot(step))
             case .has:
                 throw SelectorCompileError.invalidSelector(":has is not allowed inside simpleStep")
             }

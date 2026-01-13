@@ -22,7 +22,7 @@ struct ServerStart: AsyncParsableCommand {
             "-scheme", "idc-server",
             "-testPlan", "idc-server-keep-alive",
             "-destination", destination,
-            "-only-testing:idc-serverUITests/ServerKeepAliveTests/testServerKeepAlive"
+            "-only-testing:idc-serverUITests/ServerKeepAliveTests/testServerKeepAlive",
         ]
 
         try await runStreamingCommand("xcodebuild", args)
@@ -69,7 +69,7 @@ private func locateServerProject() throws -> URL {
     let fm = FileManager.default
     var current = URL(fileURLWithPath: fm.currentDirectoryPath)
 
-    for _ in 0..<6 {
+    for _ in 0 ..< 6 {
         let candidate = current.appendingPathComponent("idc-server/idc-server.xcodeproj")
         if fm.fileExists(atPath: candidate.path) {
             return candidate
@@ -90,12 +90,12 @@ private func runCommand(_ command: String, _ arguments: [String]) async throws -
     )
 
     switch result.terminationStatus {
-    case .exited(let code) where code == 0:
+    case let .exited(code) where code == 0:
         return Data(result.standardOutput)
-    case .exited(let code):
+    case let .exited(code):
         let stderr = result.standardError ?? ""
         throw ValidationError("Command failed (\(command)) exit code \(code): \(stderr)")
-    case .unhandledException(let code):
+    case let .unhandledException(code):
         let stderr = result.standardError ?? ""
         throw ValidationError("Command failed (\(command)) unhandled exception \(code): \(stderr)")
     }
@@ -110,11 +110,11 @@ private func runStreamingCommand(_ command: String, _ arguments: [String]) async
     )
 
     switch result.terminationStatus {
-    case .exited(let code) where code == 0:
+    case let .exited(code) where code == 0:
         return
-    case .exited(let code):
+    case let .exited(code):
         throw ValidationError("\(command) failed with exit code \(code).")
-    case .unhandledException(let code):
+    case let .unhandledException(code):
         throw ValidationError("\(command) failed with unhandled exception \(code).")
     }
 }

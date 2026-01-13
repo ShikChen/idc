@@ -1,5 +1,5 @@
 //
-//  idc_serverUITests.swift
+//  ServerTests.swift
 //  idc-serverUITests
 //
 //  Created by Shik Chen on 2026/1/10.
@@ -41,12 +41,12 @@ final class ServerEndpointsTests: XCTestCase {
         XCTAssertFalse(info.name.isEmpty)
         XCTAssertFalse(info.model.isEmpty)
         XCTAssertFalse(info.os_version.isEmpty)
-#if targetEnvironment(simulator)
-        XCTAssertTrue(info.is_simulator)
-        XCTAssertNotNil(info.udid)
-#else
-        XCTAssertFalse(info.is_simulator)
-#endif
+        #if targetEnvironment(simulator)
+            XCTAssertTrue(info.is_simulator)
+            XCTAssertNotNil(info.udid)
+        #else
+            XCTAssertFalse(info.is_simulator)
+        #endif
     }
 
     func testDescribeUI() async throws {

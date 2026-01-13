@@ -1,5 +1,5 @@
-import XCTest
 @testable import idc
+import XCTest
 
 final class TapTests: XCTestCase {
     func testParseTapPointPoints() throws {

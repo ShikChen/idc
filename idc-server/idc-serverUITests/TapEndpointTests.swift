@@ -244,5 +244,4 @@ final class TapEndpointTests: XCTestCase {
         }
         XCTFail("Foreground app did not expose fixture UI in time.")
     }
-
 }

@@ -27,10 +27,10 @@ struct Frame: Codable {
     let height: Double
 
     init(_ rect: CGRect) {
-        self.x = Double(rect.origin.x)
-        self.y = Double(rect.origin.y)
-        self.width = Double(rect.size.width)
-        self.height = Double(rect.size.height)
+        x = Double(rect.origin.x)
+        y = Double(rect.origin.y)
+        width = Double(rect.size.width)
+        height = Double(rect.size.height)
     }
 }
 
@@ -93,11 +93,11 @@ enum JSONValue: Codable {
     func encode(to encoder: Encoder) throws {
         var container = encoder.singleValueContainer()
         switch self {
-        case .string(let string):
+        case let .string(string):
             try container.encode(string)
-        case .number(let number):
+        case let .number(number):
             try container.encode(number)
-        case .bool(let bool):
+        case let .bool(bool):
             try container.encode(bool)
         case .null:
             try container.encodeNil()

@@ -19,7 +19,7 @@ struct Tap: AsyncParsableCommand {
     var timeout: Double = 5
 
     mutating func run() async throws {
-        if selector == nil && at == nil {
+        if selector == nil, at == nil {
             throw ValidationError("Provide a selector or --at.")
         }
 

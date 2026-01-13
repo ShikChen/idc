@@ -33,8 +33,8 @@ struct DescribeUI: AsyncParsableCommand {
 
         if json {
             FileHandle.standardOutput.write(data)
-            if data.last != 0x0a {
-                FileHandle.standardOutput.write(Data([0x0a]))
+            if data.last != 0x0A {
+                FileHandle.standardOutput.write(Data([0x0A]))
             }
             return
         }
@@ -192,7 +192,7 @@ private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [Descr
     return flattened
 }
 
-private func shouldFlattenNode(_ node: DescribeUINode, parent: DescribeUINode) -> Bool {
+private func shouldFlattenNode(_ node: DescribeUINode, parent _: DescribeUINode) -> Bool {
     guard node.elementType == "other" else { return false }
     guard !hasValueLike(node) else { return false }
     guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
