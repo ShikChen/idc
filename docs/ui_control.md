@@ -103,11 +103,11 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 ### 5) Pseudo-classes
 
 ```
-:has(simpleStep)          // contains descendant
-:is(simpleStep, ...)      // OR
-:not(simpleStep)          // NOT
+:has(simpleStep)         // contains descendant
+:is(simpleStep, ...)     // OR
+:not(simpleStep)         // NOT
 :predicate("...")        // raw NSPredicate
-:only                     // unique match at this step
+:only                    // unique match at this step
 ```
 
 **simpleStep** = one step with optional type + filters, **no combinators** and **no pickers**.
@@ -294,3 +294,4 @@ idc tap --at 100,200
 - `:only` enforces uniqueness.
 - `[n]` selects by index (0-based; negative allowed, `-1` = last).
 - `value` is matched as a **string** (non-string values are stringified).
+- In XCUI APIs, parameters named `identifier` also match any of these identifying properties (not just `identifier`).
