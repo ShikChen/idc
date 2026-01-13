@@ -1,17 +1,35 @@
-# UI Control DSL + CLI Spec (Draft)
+# UI Control DSL + CLI Spec
 
 This document defines the selector DSL and CLI behavior for `idc tap`.
 
-## Selector DSL v0.5 (CSS-like)
+## Selector DSL v0.6 (Query-or-Element, CSS-like)
 
-### 1) Grammar
+### 1) Grammar (EBNF)
 
 ```
 selector := step (combinator step)*
 combinator := " " | ">"
-step := [type] filter* pseudo*
-pseudo := ":has(...)" | ":is(...)" | ":not(...)" | ":only"
+step := [type] filter* pick?
+
 type := elementTypeName
+
+filter := attrFilter | textFilter | hasFilter | isFilter | notFilter | predicateFilter
+pick := indexPick | onlyPick
+
+attrFilter := "[" attrName attrOp string caseFlag? "]"
+            | "[" boolAttr ("=" bool)? "]"
+            | "[!" boolAttr "]"
+textFilter := '["' text '"' caseFlag? ']'
+hasFilter := ":has(" simpleStep ")"
+isFilter := ":is(" simpleStep ("," simpleStep)* ")"
+notFilter := ":not(" simpleStep ")"
+predicateFilter := ':predicate("' predicate '")'
+
+indexPick := "[" integer "]"
+onlyPick := ":only"
+
+simpleStep := [type] simpleFilter+
+simpleFilter := attrFilter | textFilter | isFilter | notFilter | predicateFilter
 ```
 
 - Space (` `) means **descendants**.
@@ -19,81 +37,92 @@ type := elementTypeName
 - `type` is **case-insensitive**.
 - `type` is optional. If omitted, it implies no type constraint.
 
-### 2) Filters (AND, inside `[...]`)
+### 2) Evaluation model (Query-or-Element)
 
+Each step produces either:
+- a **query** (`XCUIElementQuery`), or
+- a **single element** (`XCUIElement`) when `:only` or `[index]` is used.
+
+Steps after a picker operate relative to that selected element.
+
+### 3) String filters
+
+**Shorthand**
 ```
-["text"]                  // shorthand (case-sensitive)
-["text" i]                // shorthand (case-insensitive)
-["text" s]                // explicit case-sensitive
-[label="..."]             // exact
-[label*="..."]            // contains
-[label^="..."]            // begins with
-[label$="..."]            // ends with
-[label~="regex"]          // regex (MATCHES)
-[label="..." i]           // case-insensitive
-[label="..." s]           // explicit case-sensitive
+["text"]
+["text" i]
+["text" s]
+```
+Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValue` (exact match).
+
+**Attribute filters**
+```
+[label="..."]
+[label*="..."]
+[label^="..."]
+[label$="..."]
+[label~="regex"]
 
 [identifier="..."]
 [title="..."]
-
-[value="..."]             // value is string-only matching
-[value*="..."]
-[value~="regex"]
-
-[placeholder="..."]
-[placeholder*="..."]
-[placeholder~="regex"]
-
-[enabled] / [!enabled]
-[selected] / [!selected]
-[focused] / [!focused]
-
-[n]                       // index (0-based, negative allowed; -1 = last)
+[value="..."]
+[placeholderValue="..."]
+[placeholder="..."]   // alias for placeholderValue
 ```
 
-**Shorthand `["text"]`**  
-Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValue` (exact match).
+- Operators: `=` (exact), `*=` (contains), `^=` (begins), `$=` (ends), `~=` (regex)
+- Case sensitivity: default **case-sensitive**; add `i` for case-insensitive, `s` to force case-sensitive.
+- `value` is matched as a **string** (non-string values are stringified).
+- All filters inside the same step are ANDed into a single predicate.
 
-**Case sensitivity**  
-String filters are **case-sensitive by default**. Use `i` to enable case-insensitive matching and `s` to force case-sensitive.
+### 4) Bool filters
 
-**Bool aliases**  
+```
+[enabled]
+[enabled=false]
+[!enabled]
+
+[disabled]      // alias for !enabled
+```
+
+**Bool aliases**
 - `enabled` / `isEnabled`
 - `selected` / `isSelected`
 - `focused` / `hasFocus`
 - `disabled` is an alias for `!enabled`
 
-### 3) Pseudo-classes
+### 5) Pseudo-classes
 
 ```
-:has(selector)            // contains descendant
-:is(selector, selector)   // OR
-:not(selector)            // NOT
-:only                    // unique match at this step
+:has(simpleStep)          // contains descendant
+:is(simpleStep, ...)      // OR
+:not(simpleStep)          // NOT
+:predicate("...")        // raw NSPredicate
+:only                     // unique match at this step
 ```
 
-`:is()` and `:not()` follow CSS-like semantics: the selector is evaluated relative to the **current element** and may include combinators.
-`:only` applies at the point it appears and can be used inside `:has()` / `:is()` / `:not()`.
+**simpleStep** = one step with optional type + filters, **no combinators** and **no pickers**.
 
-### 4) Frame filter
+Semantics:
+- `:is(...)` ORs the predicates of its `simpleStep` list.
+- `:not(...)` negates the predicate of its `simpleStep`.
+- `:has(...)` matches elements that contain a descendant matching `simpleStep`.
+- `:predicate(...)` injects raw NSPredicate into the current step.
+
+### 6) Pickers
 
 ```
-[frame*=(x,y)]            // frame contains point (screen points)
-[frame*=(70%,40%)]        // screen-normalized
-[frame*=(100,20%)]        // mixed units
+[n]                       // index (0-based, negative allowed; -1 = last)
+:only                     // unique match at this step
 ```
 
-- `*=` means "contains".
-- `%` uses screen-normalized coordinates (0–100%).
-- `frame` is **post-filtered** after query resolution.
-- An epsilon (0.5pt) is applied to avoid boundary rounding issues.
+`[n]` / `:only` converts a query into a single element for subsequent steps.
 
-### 5) Uniqueness
+### 7) Root
 
-- `:only` requires a unique match at its position (otherwise 409).
-- For actions that require a single element, the default is **first match**.
+An empty selector targets the **foreground app**.
 
-### 6) Examples
+### 8) Examples
 
 ```
 button[label="OK"]
@@ -101,168 +130,125 @@ navigationBar > button[label*="Add"]
 [label="Settings"]
 ["settings" i]
 cell:has(button[label*="Download"])
-cell[frame*=(50%,50%)]
-button[label~="^Add .*"]
-button:is([label="A"], [label="B"])
-button:not([enabled])
+button:is(button[label="A"], button[label="B"])
+button:not(button[enabled])
 [disabled]
+cell[2] button
+button:only
 ```
 
 ---
 
-## Opcode Spec (compiled form)
+## XCUIElementQuery method coverage (selector equivalents)
 
-The CLI compiles a selector into a JSON opcode program. The server interprets it.
+### Creating new queries
+
+- `children(matching: type)`
+  - `parent > type`
+
+- `descendants(matching: type)`
+  - `parent type`
+
+- `matching(identifier:)`
+  - `["text"]` (exact, case-sensitive shorthand)
+
+- `matching(type, identifier:)`
+  - `type["text"]` (exact, case-sensitive shorthand)
+
+- `matching(NSPredicate)`
+  - Any attribute filter, `:is(...)`, `:not(...)`, `:predicate(...)` (not matched by the shorthand APIs)
+
+- `containing(NSPredicate)`
+  - `A:has(simpleStep)`
+
+- `containing(type, identifier:)`
+  - `A:has(type["text"])` (exact, case-sensitive shorthand)
+
+### Accessing matched elements
+
+- `count`
+  - used by negative index; `:only` avoids `count` and avoids `query.element` (which fails tests on non-unique)
+
+- `element(boundBy:)` / `element(at:)`
+  - `[index]`
+
+- `element` (single element)
+  - `:only` or any action that requires a single element
+
+- `element(matching: NSPredicate)`
+  - `:only` with predicate-only filters
+
+- `subscript(String)`
+  - `type["text"]` or `["text"]` (exact, case-sensitive shorthand)
+
+---
+
+## Compilation rules (high level)
+
+- **Steps** compile to either a query or a single element.
+- **Filters** in a step are combined into a single NSPredicate (AND).
+- `:is()` compiles to OR predicate over its simpleSteps.
+- `:not()` compiles to NOT predicate of its simpleStep.
+- `:predicate("...")` injects raw NSPredicate.
+- `:has(simpleStep)` compiles to `containing(NSPredicate)`.
+
+Whenever possible, use specialized XCUI APIs:
+- `matching(identifier:)` for shorthand `["text"]` (exact, case-sensitive)
+- `matching(type, identifier:)` for `type["text"]` (exact, case-sensitive)
+- `containing(type, identifier:)` for `type:has(type["text"])` (exact, case-sensitive)
+
+All other cases use `matching(NSPredicate)`.
+
+---
+
+## Execution Plan (server-ready opcode)
+
+The CLI compiles a selector into a JSON plan that maps 1:1 to XCUI method calls.
+The server executes the plan without re-parsing DSL semantics.
 
 ### Shape
 
 ```json
 {
-  "version": 1,
-  "steps": [
-    {
-      "axis": "descendantOrSelf" | "descendant" | "child",
-      "ops": [ /* Op[] in-order */ ]
-    }
+  "version": 2,
+  "pipeline": [
+    { "op": "descendants", "type": "any" },
+    { "op": "matchIdentifier", "value": "Settings" },
+    { "op": "matchPredicate", "value": "label == 'OK'" },
+    { "op": "children", "type": "button" },
+    { "op": "pickIndex", "value": -1 }
   ]
 }
 ```
 
-- First step uses `descendantOrSelf` so the root can match.
-- Space combinator uses `descendant`.
-- `>` uses `child`.
-
 ### Ops
 
-#### 1) type
+- `descendants` / `children`
+  - Input: Element or Query
+  - Output: Query
 
-```json
-{ "op": "type", "value": "button" }
-```
+- `matchIdentifier`
+  - `matching(identifier:)`
 
-```swift
-query = query.matching(type)
-```
+- `matchTypeIdentifier`
+  - `matching(type, identifier:)`
 
-#### 2) subscript (shorthand)
+- `matchPredicate`
+  - `matching(NSPredicate)`
 
-```json
-{ "op": "subscript", "value": "Settings", "case": "s" }
-```
+- `containPredicate`
+  - `containing(NSPredicate)`
 
-```swift
-let modifier = caseFlag == .i ? "[c]" : ""
-let format = "identifier ==\(modifier) %@ OR title ==\(modifier) %@ OR label ==\(modifier) %@ OR value ==\(modifier) %@ OR placeholderValue ==\(modifier) %@"
-let p = NSPredicate(format: format, text, text, text, text, text)
-query = query.matching(p)
-```
+- `containTypeIdentifier`
+  - `containing(type, identifier:)`
 
-#### 3) attrString
+- `pickIndex`
+  - `element(boundBy:)` (negative index uses `count` first)
 
-```json
-{ "op": "attrString", "field": "label", "match": "contains", "value": "Add", "case": "i" }
-```
+- `pickOnly`
+  - preferred: `firstMatch.exists` + `element(boundBy: 1).exists` (avoids `count` and avoids `query.element` test-fail)
 
-```swift
-let modifier = caseFlag == .i ? "[c]" : ""
-let format: String
-switch match {
-case .eq:       format = "%K ==\(modifier) %@"
-case .contains: format = "%K CONTAINS\(modifier) %@"
-case .begins:   format = "%K BEGINSWITH\(modifier) %@"
-case .ends:     format = "%K ENDSWITH\(modifier) %@"
-case .regex:    format = "%K MATCHES %@"
-}
-let rhs = (match == .regex && caseFlag == .i) ? "(?i)" + value : value
-p = NSPredicate(format: format, field, rhs)
-query = query.matching(p)
-```
-
-#### 4) attrBool
-
-```json
-{ "op": "attrBool", "field": "isEnabled", "value": true }
-```
-
-```swift
-let p = NSPredicate(format: "%K == %@", field, NSNumber(value: value))
-query = query.matching(p)
-```
-
-#### 5) index
-
-```json
-{ "op": "index", "value": -2 }
-```
-
-```swift
-let resolved = resolveIndex(value, count: query.count)
-elements = resolved == nil ? [] : [query.element(boundBy: resolved!)]
-```
-
-#### 6) only
-
-```json
-{ "op": "only" }
-```
-
-```swift
-guard elements.count == 1 else { throw IDCError.notUnique }
-```
-
-#### 7) frame
-
-```json
-{
-  "op": "frame",
-  "match": "contains",
-  "point": { "x": { "value": 100, "unit": "pt" }, "y": { "value": 20, "unit": "pct" } }
-}
-```
-
-```swift
-let p = resolvePoint(point, screenSize: screenSize)
-let frame = element.frame.insetBy(dx: -0.5, dy: -0.5)
-return frame.contains(p)
-```
-
-#### 8) has
-
-```json
-{ "op": "has", "selector": { "steps": [ ... ] } }
-```
-
-```swift
-return !resolve(selector, from: element, anchor: .descendant).isEmpty
-```
-
-#### 9) is
-
-```json
-{ "op": "is", "selectors": [ { "steps": [ ... ] }, ... ] }
-```
-
-```swift
-return selectors.contains { !resolve($0, from: element, anchor: .self).isEmpty }
-```
-
-#### 10) not
-
-```json
-{ "op": "not", "selector": { "steps": [ ... ] } }
-```
-
-```swift
-return resolve(selector, from: element, anchor: .self).isEmpty
-```
-
-### Notes
-
-- `case` uses `"s"` (case-sensitive, default) or `"i"` (case-insensitive).
-- `disabled` compiles to `attrBool(isEnabled=false)`.
-- `focused` is an alias of `hasFocus`, `enabled` -> `isEnabled`, `selected` -> `isSelected`.
-- `subscript` uses NSPredicate to honor `case`.
-- `has` uses a descendant anchor; `is`/`not` use a self anchor (implicit, not in opcode).
+---
 
 ## CLI Spec: `idc tap`
 
