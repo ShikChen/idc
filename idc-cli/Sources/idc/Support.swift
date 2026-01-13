@@ -5,6 +5,15 @@ struct InfoResponse: Decodable {
     let udid: String?
 }
 
+func validateUDID(_ expectedUDID: String?, timeout: TimeInterval) async throws {
+    guard let expectedUDID else { return }
+    let info: InfoResponse = try await fetchJSON(path: "/info", timeout: timeout)
+    if info.udid != expectedUDID {
+        let actual = info.udid ?? "nil"
+        throw ValidationError("Server is running for a different simulator. Expected \(expectedUDID), got \(actual).")
+    }
+}
+
 func fetchJSON<T: Decodable>(path: String, timeout: TimeInterval) async throws -> T {
     do {
         let data = try await fetchData(path: path, timeout: timeout)

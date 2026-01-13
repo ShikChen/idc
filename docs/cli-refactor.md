@@ -129,3 +129,26 @@
 
 - Reviewed file; no refactoring required
 - Good coverage of point parsing edge cases
+
+---
+
+# Cross-File Refactoring
+
+## Extract `validateUDID()` helper ✓
+
+### TODO
+
+- [x] Add `validateUDID()` function to `Support.swift`
+- [x] Replace duplicated code in `DescribeUI.swift`
+- [x] Replace duplicated code in `ServerHealth.swift`
+- [x] Replace duplicated code in `Tap.swift`
+
+### Summary
+
+- Added `validateUDID(_ expectedUDID:timeout:)` helper to `Support.swift`
+- Replaced 3 instances of duplicated UDID validation logic with single function call
+- Each command now uses `try await validateUDID(udid, timeout: timeout)`
+
+## Extract `serverUnreachableError()` helper
+
+## Split SelectorDSL.swift into separate files

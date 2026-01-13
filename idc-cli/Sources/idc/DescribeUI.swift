@@ -23,13 +23,7 @@ struct DescribeUI: AsyncParsableCommand {
             throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
         }
 
-        if let udid {
-            let info: InfoResponse = try await fetchJSON(path: "/info", timeout: timeout)
-            if info.udid != udid {
-                let actual = info.udid ?? "nil"
-                throw ValidationError("Server is running for a different simulator. Expected \(udid), got \(actual).")
-            }
-        }
+        try await validateUDID(udid, timeout: timeout)
 
         if json {
             FileHandle.standardOutput.write(data)

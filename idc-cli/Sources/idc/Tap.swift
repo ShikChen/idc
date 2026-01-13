@@ -46,13 +46,7 @@ struct Tap: AsyncParsableCommand {
             point = nil
         }
 
-        if let udid {
-            let info: InfoResponse = try await fetchJSON(path: "/info", timeout: timeout)
-            if info.udid != udid {
-                let actual = info.udid ?? "nil"
-                throw ValidationError("Server is running for a different simulator. Expected \(udid), got \(actual).")
-            }
-        }
+        try await validateUDID(udid, timeout: timeout)
 
         let request = TapRequest(plan: plan, at: point)
         let (data, response) = try await postJSON(path: "/tap", body: request, timeout: timeout)

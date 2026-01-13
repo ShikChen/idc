@@ -23,16 +23,7 @@ struct ServerHealth: AsyncParsableCommand {
             throw ValidationError("Server unhealthy: \(health.status)")
         }
 
-        if let udid {
-            let info: InfoResponse = try await fetchJSON(
-                path: "/info",
-                timeout: timeout
-            )
-            if info.udid != udid {
-                let actual = info.udid ?? "nil"
-                throw ValidationError("Server is running for a different simulator. Expected \(udid), got \(actual).")
-            }
-        }
+        try await validateUDID(udid, timeout: timeout)
 
         print("ok")
     }
