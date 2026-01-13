@@ -73,7 +73,16 @@
 - Reviewed file; no refactoring required
 - Code is minimal and well-structured
 
-## Sources/idc/ServerStart.swift
+## Sources/idc/ServerStart.swift ✓
+
+### TODO
+
+- [x] Fix race condition in `ShutdownController.requestStop()` - stop request lost if called before `set()`
+
+### Summary
+
+- Fixed race condition where stop request was lost if SIGINT arrived before subprocess started
+- `requestStop()` now sets `stopRequested = true` before returning when execution is nil
 
 ## Sources/idc/Support.swift
 

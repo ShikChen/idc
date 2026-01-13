@@ -155,7 +155,10 @@ private actor ShutdownController {
     }
 
     func requestStop() {
-        guard let execution else { return }
+        guard let execution else {
+            stopRequested = true
+            return
+        }
         if stopRequested {
             sendSignals(execution)
             return
