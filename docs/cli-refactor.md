@@ -1,183 +1,131 @@
-# idc-cli Refactor
+# idc-cli Refactor (Round 2)
 
 ## Package.swift ✓
 
 ### TODO
 
-- [x] Remove boilerplate comment on line 2
-- [x] Remove template comments on lines 17-18
+- (No changes needed)
 
 ### Summary
 
-- Removed redundant swift-tools-version explanation comment
-- Removed template comments explaining what targets are
+- Clean after round 1
 
 ## Sources/idc/DescribeUI.swift ✓
 
 ### TODO
 
-- [x] Use default parameter instead of wrapper function for `renderDescribeTree`
-- [x] Remove unused `parent` parameter from `shouldFlattenNode`
-- [x] Display `value` and `placeholderValue` in describe output when present
+- (No changes needed)
 
 ### Summary
 
-- Consolidated `renderDescribeTree` overloads into single function with default `isRoot: Bool = true` parameter
-- Removed unused `parent` parameter from `shouldFlattenNode` function signature
-- Added display of `value` field (as formatted JSON) in describe output
-- Added display of `placeholderValue` field in describe output
-- Added `formatJSONValue` helper to render JSONValue enum as readable string
+- Both imports used (ArgumentParser for CLI, Foundation for Data/JSONDecoder)
 
 ## Sources/idc/idc.swift ✓
 
 ### TODO
 
-- [x] Remove template comments at top of file
+- (No changes needed)
 
 ### Summary
 
-- Removed Swift/ArgumentParser documentation URL comments from file header
+- Clean after round 1
 
 ## Sources/idc/Screenshot.swift ✓
 
 ### TODO
 
-- (No changes needed - file is already clean)
+- (No changes needed)
 
 ### Summary
 
-- Reviewed file; no refactoring required
-- Code is well-structured with clear responsibility
-- Existing TODO comment is a valid future enhancement (simctl integration)
+- Both imports used (ArgumentParser for CLI, Foundation for Data/URL/DateFormatter)
 
-## Sources/idc/SelectorDSL.swift ✓
+## Sources/idc/SelectorCompiler.swift ✓
 
 ### TODO
 
-- [x] Break long element type string into multiple lines for readability
+- [x] Remove unused `import Foundation`
 
 ### Summary
 
-- Converted `elementTypeRawValues` from single-line multiline string to array literal
-- Improved readability by breaking element types into multiple lines (~8 per line)
-- Simplified dictionary construction (no longer needs `.split(separator: " ")`)
+- Removed unused `import Foundation`
+
+## Sources/idc/SelectorParser.swift ✓
+
+### TODO
+
+- (No changes needed)
+
+### Summary
+
+- Only imports Parsing (used throughout for parser combinators)
+
+## Sources/idc/SelectorTypes.swift ✓
+
+### TODO
+
+- [x] Remove unused `import Foundation`
+
+### Summary
+
+- Removed unused `import Foundation`
 
 ## Sources/idc/ServerHealth.swift ✓
 
 ### TODO
 
-- (No changes needed - file is already clean)
+- (No changes needed)
 
 ### Summary
 
-- Reviewed file; no refactoring required
-- Code is minimal and well-structured
+- Both imports used (ArgumentParser for CLI, Foundation for Decodable)
 
 ## Sources/idc/ServerStart.swift ✓
 
 ### TODO
 
-- [x] Fix race condition in `ShutdownController.requestStop()` - stop request lost if called before `set()`
+- (No changes needed)
 
 ### Summary
 
-- Fixed race condition where stop request was lost if SIGINT arrived before subprocess started
-- `requestStop()` now sets `stopRequested = true` before returning when execution is nil
+- All four imports used (ArgumentParser, Dispatch, Foundation, Subprocess)
 
 ## Sources/idc/Support.swift ✓
 
 ### TODO
 
-- [x] Use async URLSession API in `fetchData` instead of `withCheckedThrowingContinuation`
+- (No changes needed)
 
 ### Summary
 
-- Simplified `fetchData` by using native async URLSession API
-- Removed manual `withCheckedThrowingContinuation` wrapper
-- Now consistent with `postJSON` which already uses async URLSession
+- Both imports used (ArgumentParser for ValidationError, Foundation for URL/Data/JSON)
 
 ## Sources/idc/Tap.swift ✓
 
 ### TODO
 
-- (No changes needed - file is already clean)
+- (No changes needed)
 
 ### Summary
 
-- Reviewed file; no refactoring required
-- Code is well-structured with clear error handling and parsing logic
+- Both imports used (ArgumentParser for CLI, Foundation for JSONDecoder)
 
 ## Tests/idcTests/SelectorDSLTests.swift ✓
 
 ### TODO
 
-- (No changes needed - file is already clean)
+- (No changes needed)
 
 ### Summary
 
-- Reviewed file; no refactoring required
-- Comprehensive test coverage with good use of helper functions
-- Tests are well-organized and readable
+- Both imports used (@testable import idc, XCTest)
 
 ## Tests/idcTests/TapTests.swift ✓
 
 ### TODO
 
-- (No changes needed - file is already clean)
+- (No changes needed)
 
 ### Summary
 
-- Reviewed file; no refactoring required
-- Good coverage of point parsing edge cases
-
----
-
-# Cross-File Refactoring
-
-## Extract `validateUDID()` helper ✓
-
-### TODO
-
-- [x] Add `validateUDID()` function to `Support.swift`
-- [x] Replace duplicated code in `DescribeUI.swift`
-- [x] Replace duplicated code in `ServerHealth.swift`
-- [x] Replace duplicated code in `Tap.swift`
-
-### Summary
-
-- Added `validateUDID(_ expectedUDID:timeout:)` helper to `Support.swift`
-- Replaced 3 instances of duplicated UDID validation logic with single function call
-- Each command now uses `try await validateUDID(udid, timeout: timeout)`
-
-## Extract `serverUnreachableError()` helper ✓
-
-### TODO
-
-- [x] Add `serverUnreachableError()` function to `Support.swift`
-- [x] Replace duplicated error in `DescribeUI.swift`
-- [x] Replace duplicated error in `Screenshot.swift`
-- [x] Replace duplicated errors in `Support.swift` (2 places)
-
-### Summary
-
-- Added `serverUnreachableError(_ error:) -> ValidationError` helper to `Support.swift`
-- Replaced 4 instances of duplicated error message construction
-- Centralizes the user-facing error message for server connectivity issues
-
-## Split SelectorDSL.swift into separate files ✓
-
-### TODO
-
-- [x] Create `SelectorTypes.swift` with AST, ExecutionPlan, and Error types (lines 1-165)
-- [x] Create `SelectorParser.swift` with parser implementation (lines 166-548)
-- [x] Create `SelectorCompiler.swift` with compiler implementation (lines 549-end)
-- [x] Remove original `SelectorDSL.swift`
-
-### Summary
-
-- Split 770-line `SelectorDSL.swift` into 3 focused files:
-  - `SelectorTypes.swift` (~160 lines): AST, ExecutionPlan, ExecutionOp, and error types
-  - `SelectorParser.swift` (~330 lines): Parser and DSL combinators
-  - `SelectorCompiler.swift` (~220 lines): Compiler and predicate generation
-- Each file now has a clear single responsibility
-- All existing tests continue to pass
+- Both imports used (@testable import idc, XCTest)

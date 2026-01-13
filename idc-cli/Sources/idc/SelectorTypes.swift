@@ -1,5 +1,3 @@
-import Foundation
-
 // MARK: - AST
 
 struct SelectorAST: Equatable {
