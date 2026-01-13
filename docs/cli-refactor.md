@@ -12,7 +12,21 @@
 - Removed redundant swift-tools-version explanation comment
 - Removed template comments explaining what targets are
 
-## Sources/idc/DescribeUI.swift
+## Sources/idc/DescribeUI.swift ✓
+
+### TODO
+
+- [x] Use default parameter instead of wrapper function for `renderDescribeTree`
+- [x] Remove unused `parent` parameter from `shouldFlattenNode`
+- [x] Display `value` and `placeholderValue` in describe output when present
+
+### Summary
+
+- Consolidated `renderDescribeTree` overloads into single function with default `isRoot: Bool = true` parameter
+- Removed unused `parent` parameter from `shouldFlattenNode` function signature
+- Added display of `value` field (as formatted JSON) in describe output
+- Added display of `placeholderValue` field in describe output
+- Added `formatJSONValue` helper to render JSONValue enum as readable string
 
 ## Sources/idc/idc.swift
 

@@ -97,11 +97,7 @@ private enum JSONValue: Decodable {
     }
 }
 
-private func renderDescribeTree(_ node: DescribeUINode, depth: Int) {
-    renderDescribeTree(node, depth: depth, isRoot: true)
-}
-
-private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool) {
+private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool = true) {
     if !isRoot, let child = simplifiableChild(for: node) {
         renderDescribeTree(child, depth: depth, isRoot: false)
         return
@@ -133,6 +129,12 @@ private func describeLine(for node: DescribeUINode) -> String {
     if !node.identifier.isEmpty {
         parts.append("identifier=\"\(escapeValue(node.identifier))\"")
     }
+    if let value = node.value {
+        parts.append("value=\(formatJSONValue(value))")
+    }
+    if let placeholder = node.placeholderValue {
+        parts.append("placeholder=\"\(escapeValue(placeholder))\"")
+    }
     if node.hasFocus {
         parts.append("hasFocus=true")
     }
@@ -152,6 +154,22 @@ private func escapeValue(_ value: String) -> String {
     escaped = escaped.replacingOccurrences(of: "\r", with: "\\r")
     escaped = escaped.replacingOccurrences(of: "\t", with: "\\t")
     return escaped
+}
+
+private func formatJSONValue(_ value: JSONValue) -> String {
+    switch value {
+    case let .string(s):
+        return "\"\(escapeValue(s))\""
+    case let .number(n):
+        if n == n.rounded() && abs(n) < Double(Int.max) {
+            return String(Int(n))
+        }
+        return String(n)
+    case let .bool(b):
+        return b ? "true" : "false"
+    case .null:
+        return "null"
+    }
 }
 
 private func simplifiableChild(for node: DescribeUINode) -> DescribeUINode? {
@@ -180,7 +198,7 @@ private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [Descr
         didChange = false
         var next: [DescribeUINode] = []
         for child in flattened {
-            if shouldFlattenNode(child, parent: node) {
+            if shouldFlattenNode(child) {
                 next.append(contentsOf: child.children)
                 didChange = true
             } else {
@@ -192,7 +210,7 @@ private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [Descr
     return flattened
 }
 
-private func shouldFlattenNode(_ node: DescribeUINode, parent _: DescribeUINode) -> Bool {
+private func shouldFlattenNode(_ node: DescribeUINode) -> Bool {
     guard node.elementType == "other" else { return false }
     guard !hasValueLike(node) else { return false }
     guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
