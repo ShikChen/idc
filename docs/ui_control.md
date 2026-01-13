@@ -44,6 +44,7 @@ escape := "\\" ("\"" | "\\" | "n" | "t" | "r")
 ### 2) Evaluation model (Query-or-Element)
 
 Each step produces either:
+
 - a **query** (`XCUIElementQuery`), or
 - a **single element** (`XCUIElement`) when `:only` or `[index]` is used.
 
@@ -53,14 +54,17 @@ If the final selector resolves to a query, `idc tap` uses the **first match**.
 ### 3) String filters
 
 **Shorthand**
+
 ```
 ["text"]
 ["text" i]
 ["text" s]
 ```
+
 Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValue` (exact match).
 
 **Attribute filters**
+
 ```
 [label="..."]
 [label*="..."]
@@ -81,6 +85,7 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 - All filters inside the same step are ANDed into a single predicate.
 
 **String escaping**
+
 - Strings use double quotes.
 - Escape sequences: `\"`, `\\`, `\n`, `\t`, `\r`.
 
@@ -95,6 +100,7 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 ```
 
 **Bool aliases**
+
 - `enabled` / `isEnabled`
 - `selected` / `isSelected`
 - `focused` / `hasFocus`
@@ -114,6 +120,7 @@ Matches any one of: `identifier`, `title`, `label`, `value`, or `placeholderValu
 Type-only `simpleStep` is allowed (example: `:has(button)`).
 
 Semantics:
+
 - `:is(...)` ORs the predicates of its `simpleStep` list.
 - `:not(...)` negates the predicate of its `simpleStep`.
 - `:has(...)` matches elements that contain a descendant matching `simpleStep`.
@@ -203,6 +210,7 @@ button:only
 - `:has(simpleStep)` compiles to `containing(NSPredicate)`.
 
 Whenever possible, use specialized XCUI APIs:
+
 - `matching(identifier:)` for shorthand `["text"]` (exact, case-sensitive)
 - `matching(type, identifier:)` for `type["text"]` (exact, case-sensitive)
 - `containing(type, identifier:)` for `type:has(type["text"])` (exact, case-sensitive)
