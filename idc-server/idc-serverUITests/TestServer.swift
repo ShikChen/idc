@@ -206,8 +206,7 @@ private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapP
     guard let element else {
         throw PlanError.invalidPlan("Missing selector or tap point.")
     }
-    let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
-    center.tap()
+    tapElementSmart(element)
 }
 
 private func tapElement(element: XCUIElement, point: PointSpec) {
@@ -225,6 +224,34 @@ private func tapScreen(app: XCUIApplication, point: CGPoint) {
         dy: point.y - app.frame.minY
     )
     origin.withOffset(offset).tap()
+}
+
+private func tapElementSmart(_ element: XCUIElement) {
+    // SwiftUI Toggle exposes an outer switch element whose label area isn't tappable in UI tests.
+    // Tap the innermost switch descendant to hit the actual UISwitch control.
+    if element.elementType == .switch {
+        let target = toggleTapTarget(for: element)
+        target.tap()
+        return
+    }
+    element.tap()
+}
+
+private func toggleTapTarget(for element: XCUIElement) -> XCUIElement {
+    let candidates = element.descendants(matching: .switch).allElementsBoundByIndex
+    guard !candidates.isEmpty else { return element }
+    var best: XCUIElement = element
+    var bestArea = CGFloat.greatestFiniteMagnitude
+    for candidate in candidates {
+        let frame = candidate.frame
+        let area = frame.width * frame.height
+        guard area > 0 else { continue }
+        if area < bestArea {
+            best = candidate
+            bestArea = area
+        }
+    }
+    return best
 }
 
 private func resolveScreenPoint(_ point: PointSpec) -> CGPoint {
