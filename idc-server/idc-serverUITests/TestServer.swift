@@ -40,6 +40,7 @@ actor TestServer {
     private let server: HTTPServer
     private var serverTask: Task<Void, Error>?
     private var routesConfigured = false
+    private var isStopping = false
 
     init(port: UInt16 = TestServer.defaultPort) {
         server = HTTPServer(port: port)
@@ -48,20 +49,27 @@ actor TestServer {
     func start() async throws {
         await configureRoutesIfNeeded()
         if serverTask == nil {
+            isStopping = false
             serverTask = Task { try await server.run() }
             try await server.waitUntilListening(timeout: 5)
         }
     }
 
     func stop() async {
-        guard serverTask != nil else { return }
+        isStopping = true
         await server.stop()
         serverTask = nil
     }
 
     func runForever() async throws {
         await configureRoutesIfNeeded()
-        try await server.run()
+        isStopping = false
+        do {
+            try await server.run()
+        } catch {
+            if isStopping { return }
+            throw error
+        }
     }
 
     private func configureRoutesIfNeeded() async {
@@ -150,6 +158,15 @@ actor TestServer {
                     body: body
                 )
             }
+        }
+        await server.appendRoute("/stop", for: [.POST]) { _ in
+            Task { await self.stop() }
+            let body = try JSONEncoder().encode(HealthResponse(status: "stopping"))
+            return HTTPResponse(
+                statusCode: .ok,
+                headers: [.contentType: "application/json"],
+                body: body
+            )
         }
         routesConfigured = true
     }

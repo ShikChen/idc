@@ -1,4 +1,5 @@
 import ArgumentParser
+import Dispatch
 import Foundation
 import Subprocess
 
@@ -102,12 +103,33 @@ private func runCommand(_ command: String, _ arguments: [String]) async throws -
 }
 
 private func runStreamingCommand(_ command: String, _ arguments: [String]) async throws {
+    let shutdown = ShutdownController()
+    let interruptSource = DispatchSource.makeSignalSource(signal: SIGINT, queue: .main)
+    signal(SIGINT, SIG_IGN)
+    interruptSource.setEventHandler {
+        Task { await shutdown.requestStop() }
+    }
+    interruptSource.resume()
+    defer {
+        interruptSource.cancel()
+        signal(SIGINT, SIG_DFL)
+    }
+
+    var options = PlatformOptions()
+    options.processGroupID = 0
     let result = try await run(
         .name(command),
         arguments: Arguments(arguments),
+        platformOptions: options,
         output: .fileDescriptor(.standardOutput, closeAfterSpawningProcess: false),
         error: .fileDescriptor(.standardError, closeAfterSpawningProcess: false)
-    )
+    ) { execution in
+        await shutdown.set(execution)
+    }
+
+    if await shutdown.didRequestStop {
+        return
+    }
 
     switch result.terminationStatus {
     case let .exited(code) where code == 0:
@@ -116,5 +138,70 @@ private func runStreamingCommand(_ command: String, _ arguments: [String]) async
         throw ValidationError("\(command) failed with exit code \(code).")
     case let .unhandledException(code):
         throw ValidationError("\(command) failed with unhandled exception \(code).")
+    }
+}
+
+private actor ShutdownController {
+    private var execution: Execution?
+    private var stopRequested = false
+    private var stopTask: Task<Void, Never>?
+    private var killScheduled = false
+
+    func set(_ execution: Execution) {
+        self.execution = execution
+        if stopRequested {
+            startStopTask(execution)
+        }
+    }
+
+    func requestStop() {
+        guard let execution else { return }
+        if stopRequested {
+            sendSignals(execution)
+            return
+        }
+        stopRequested = true
+        startStopTask(execution)
+    }
+
+    var didRequestStop: Bool {
+        stopRequested
+    }
+
+    private func startStopTask(_ execution: Execution) {
+        guard stopTask == nil else { return }
+        stopTask = Task {
+            if await sendStopRequest() {
+                return
+            }
+            sendSignals(execution)
+        }
+    }
+
+    private func sendStopRequest() async -> Bool {
+        guard let url = URL(string: "http://127.0.0.1:8080/stop") else {
+            return false
+        }
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.timeoutInterval = 3
+
+        do {
+            let (_, response) = try await URLSession.shared.data(for: request)
+            guard let http = response as? HTTPURLResponse else { return false }
+            return (200 ..< 300).contains(http.statusCode)
+        } catch {
+            return false
+        }
+    }
+
+    private func sendSignals(_ execution: Execution) {
+        try? execution.send(signal: .terminate, toProcessGroup: true)
+        guard !killScheduled else { return }
+        killScheduled = true
+        Task {
+            try? await Task.sleep(nanoseconds: 3_000_000_000)
+            try? execution.send(signal: .kill, toProcessGroup: true)
+        }
     }
 }
