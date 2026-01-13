@@ -107,6 +107,16 @@
 - Reviewed file; no refactoring required
 - Code is well-structured with clear error handling and parsing logic
 
-## Tests/idcTests/SelectorDSLTests.swift
+## Tests/idcTests/SelectorDSLTests.swift ✓
+
+### TODO
+
+- (No changes needed - file is already clean)
+
+### Summary
+
+- Reviewed file; no refactoring required
+- Comprehensive test coverage with good use of helper functions
+- Tests are well-organized and readable
 
 ## Tests/idcTests/TapTests.swift
