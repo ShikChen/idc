@@ -41,6 +41,7 @@ final class SelectorDSLTests: XCTestCase {
             .descendants(type: "button")
         ))
     }
+
     func testDescendantWithoutType() throws {
         let program = try compile(#"toolbar ["OK"]"#)
         XCTAssertEqual(program, plan(

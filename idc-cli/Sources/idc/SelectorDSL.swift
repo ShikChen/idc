@@ -19,42 +19,12 @@ struct SimpleStep: Equatable {
     var filters: [Filter]
 }
 
-enum Axis: String, Equatable {
-    case descendant
-    case child
-}
-
-enum CaseFlag: String, Equatable {
-    case s
-    case i
-}
-
-enum StringMatch: String, Equatable {
-    case eq
-    case contains
-    case begins
-    case ends
-    case regex
-}
-
-enum StringField: String, Equatable {
-    case identifier
-    case title
-    case label
-    case value
-    case placeholderValue
-}
-
-enum BoolField: String, Equatable {
-    case isEnabled
-    case isSelected
-    case hasFocus
-}
-
-enum PointUnit: String, Equatable, Encodable {
-    case pt
-    case pct
-}
+enum Axis: String, Equatable { case descendant, child }
+enum CaseFlag: String, Equatable { case s, i }
+enum StringMatch: String, Equatable { case eq, contains, begins, ends, regex }
+enum StringField: String, Equatable { case identifier, title, label, value, placeholderValue }
+enum BoolField: String, Equatable { case isEnabled, isSelected, hasFocus }
+enum PointUnit: String, Equatable, Encodable { case pt, pct }
 
 struct PointComponent: Equatable, Encodable {
     var value: Double
@@ -76,10 +46,7 @@ enum Filter: Equatable {
     case predicate(String)
 }
 
-enum Pick: Equatable {
-    case index(Int)
-    case only
-}
+enum Pick: Equatable { case index(Int), only }
 
 // MARK: - Execution Plan
 
@@ -207,554 +174,376 @@ struct SelectorParser {
 
     mutating func parseSelector() throws -> SelectorAST {
         do {
-            return try SelectorParsers.selector.parse(&input)
+            return try DSL.selector.parse(&input)
         } catch {
             throw SelectorParseError.parsing(String(describing: error))
         }
     }
 }
 
-private enum SelectorParsers {
-    static var selector: some Parser<Substring, SelectorAST> {
-        OneOf {
+private enum DSL {
+    typealias Input = Substring
+    typealias P<T> = AnyParser<Input, T>
+
+    private enum AttrValue {
+        case bool(Bool)
+        case string(String, CaseFlag)
+    }
+
+    private struct StepCore {
+        var type: String?
+        var filters: [Filter]
+        var pick: Pick?
+    }
+
+    private enum AttrSpec {
+        case bool(BoolField, invert: Bool)
+        case string(StringField)
+    }
+
+    static var selector: P<SelectorAST> {
+        let step = stepCore(allowHas: true, allowPick: true, allowOnly: true)
+        let combinator = combinatorParser(step)
+        return OneOf {
             Parse {
-                OptionalWhitespaceParser()
+                Whitespace()
                 End()
             }
             .map { SelectorAST(steps: []) }
+
             Parse {
-                OptionalWhitespaceParser()
-                StepCoreParser()
-                Many {
-                    combinator
-                }
-                OptionalWhitespaceParser()
+                Whitespace()
+                step
+                Many { combinator }
+                Whitespace()
                 End()
             }
             .map { first, rest in
-                var steps: [SelectorStep] = [
-                    SelectorStep(axis: .descendant, type: first.type, filters: first.filters, pick: first.pick)
-                ]
-                for (axis, core) in rest {
-                    steps.append(SelectorStep(axis: axis, type: core.type, filters: core.filters, pick: core.pick))
-                }
+                var steps = [SelectorStep(axis: .descendant, type: first.type, filters: first.filters, pick: first.pick)]
+                steps.append(contentsOf: rest.map { axis, core in
+                    SelectorStep(axis: axis, type: core.type, filters: core.filters, pick: core.pick)
+                })
                 return SelectorAST(steps: steps)
             }
         }
+        .eraseToAnyParser()
     }
 
-    static var combinator: some Parser<Substring, (Axis, StepCore)> {
+    private static func combinatorParser(_ step: P<StepCore>) -> P<(Axis, StepCore)> {
         OneOf {
-            Parse {
-                OptionalWhitespaceParser()
-                ">"
-                OptionalWhitespaceParser()
-                StepCoreParser()
-            }
-            .map { (.child, $0) }
+            Parse { Whitespace(); ">"; Whitespace(); step }
+                .map { (.child, $0) }
             Backtracking {
-                Parse {
-                    RequiredWhitespaceParser()
-                    StepCoreParser()
+                Parse { Whitespace(1...); step }
+                    .map { (Axis.descendant, $0) }
+            }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func stepCore(allowHas: Bool, allowPick: Bool, allowOnly: Bool) -> P<StepCore> {
+        let pick: P<Pick?> = allowPick
+            ? Optionally { pickParser(allowOnly: allowOnly) }.eraseToAnyParser()
+            : Always(nil).eraseToAnyParser()
+        return Parse {
+            Optionally { identifier() }
+            Many { filterParser(allowHas: allowHas) }
+            pick
+        }
+        .flatMap { type, filters, pick in
+            validate {
+                try makeStep(type: type?.lowercased(), filters: filters, pick: pick)
+            }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func simpleStep() -> P<SimpleStep> {
+        Lazy {
+            stepCore(allowHas: false, allowPick: false, allowOnly: false)
+                .flatMap { core in
+                    validate {
+                        guard core.pick == nil else { throw SelectorParseError.expected("filter") }
+                        return SimpleStep(type: core.type, filters: core.filters)
+                    }
+                }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func filterParser(allowHas: Bool) -> P<Filter> {
+        OneOf {
+            bracketFilter()
+            pseudoFilter(allowHas: allowHas)
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func bracketFilter() -> P<Filter> {
+        OneOf {
+            shorthandFilter()
+            attrFilter()
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func shorthandFilter() -> P<Filter> {
+        Parse {
+            "["
+            Whitespace()
+            quotedString()
+            caseFlag()
+            Whitespace()
+            "]"
+        }
+        .map(Filter.shorthand)
+        .eraseToAnyParser()
+    }
+
+    private static func attrFilter() -> P<Filter> {
+        Parse {
+            "["
+            Whitespace()
+            Optionally { "!" }
+            identifier()
+            Whitespace()
+            Optionally {
+                matchOperator()
+                Whitespace()
+                attrValue()
+            }
+            Whitespace()
+            "]"
+        }
+        .flatMap { negated, name, match in
+            validate {
+                try buildAttrFilter(nameLower: name.lowercased(), negated: negated != nil, match: match)
+            }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func pseudoFilter(allowHas: Bool) -> P<Filter> {
+        let not = Parse { ":"; "not"; Whitespace(); "("; Whitespace(); simpleStep(); Whitespace(); ")" }
+            .map(Filter.not)
+
+        let isMatch = Parse {
+            ":"; "is"; Whitespace(); "("; Whitespace(); simpleStep()
+            Many { Whitespace(); ","; Whitespace(); simpleStep() }
+            Whitespace(); ")"
+        }
+        .map { first, rest in Filter.isMatch([first] + rest) }
+
+        let predicate = Parse { ":"; "predicate"; Whitespace(); "("; Whitespace(); quotedString(); Whitespace(); ")" }
+            .map(Filter.predicate)
+
+        let has = Parse { ":"; "has"; Whitespace(); "("; Whitespace(); simpleStep(); Whitespace(); ")" }
+            .map(Filter.has)
+
+        if allowHas {
+            return OneOf { has; not; isMatch; predicate }.eraseToAnyParser()
+        }
+        return OneOf { not; isMatch; predicate }.eraseToAnyParser()
+    }
+
+    private static func pickParser(allowOnly: Bool) -> P<Pick> {
+        let index = Parse { "["; Whitespace(); intLiteral(); Whitespace(); "]" }
+            .map(Pick.index)
+        if allowOnly {
+            let only = Parse { ":"; "only" }.map { Pick.only }
+            return OneOf { index; only }.eraseToAnyParser()
+        }
+        return index.eraseToAnyParser()
+    }
+
+    private static func identifier() -> P<String> {
+        Parse {
+            Prefix(1) { isIdentStart($0) }
+            Prefix(0...) { isIdentChar($0) }
+        }
+        .map { first, rest in String(first) + rest }
+        .eraseToAnyParser()
+    }
+
+    private static let escapeMap: [Character: Character] = [
+        "\\": "\\",
+        "\"": "\"",
+        "n": "\n",
+        "r": "\r",
+        "t": "\t",
+    ]
+
+    private static func escapedChar() -> P<Character> {
+        Parse { "\\"; Prefix(1) }
+            .flatMap { value in
+                validate {
+                    guard let key = value.first, let mapped = escapeMap[key] else {
+                        throw SelectorParseError.invalidEscape(String(value))
+                    }
+                    return mapped
                 }
             }
-            .map { (.descendant, $0) }
+            .eraseToAnyParser()
+    }
+
+    private static func normalChar() -> P<Character> {
+        Prefix(1) { $0 != "\"" && $0 != "\\" }
+            .map { $0.first! }
+            .eraseToAnyParser()
+    }
+
+    private static func quotedString() -> P<String> {
+        Parse {
+            "\""
+            Many(into: "") { $0.append($1) } element: { OneOf { escapedChar(); normalChar() } }
+            "\""
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func caseFlag() -> P<CaseFlag> {
+        Parse {
+            Optionally {
+                Whitespace()
+                OneOf {
+                    Parse { "i" }.map { CaseFlag.i }
+                    Parse { "s" }.map { CaseFlag.s }
+                }
+            }
+        }
+        .map { $0 ?? .s }
+        .eraseToAnyParser()
+    }
+
+    private static func matchOperator() -> P<StringMatch> {
+        OneOf {
+            Parse { "*=" }.map { StringMatch.contains }
+            Parse { "^=" }.map { StringMatch.begins }
+            Parse { "$=" }.map { StringMatch.ends }
+            Parse { "~=" }.map { StringMatch.regex }
+            Parse { "=" }.map { StringMatch.eq }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func boolLiteral() -> P<Bool> {
+        OneOf {
+            Parse { "true" }.map { true }
+            Parse { "false" }.map { false }
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func attrValue() -> P<AttrValue> {
+        OneOf {
+            boolLiteral().map(AttrValue.bool)
+            Parse { quotedString(); caseFlag() }.map(AttrValue.string)
+        }
+        .eraseToAnyParser()
+    }
+
+    private static func intLiteral() -> P<Int> {
+        AnyParser { input in
+            var snapshot = input
+            var sign = 1
+            if snapshot.first == "-" {
+                sign = -1
+                snapshot.removeFirst()
+            }
+            let digits = snapshot
+            let count = digits.prefix(while: { $0 >= "0" && $0 <= "9" }).count
+            guard count > 0 else {
+                throw SelectorParseError.expected("integer")
+            }
+            let text = String(digits.prefix(count))
+            guard let value = Int(text) else {
+                throw SelectorParseError.invalidNumber(text)
+            }
+            snapshot.removeFirst(count)
+            input = snapshot
+            return sign * value
         }
     }
-}
 
-private struct StepCore {
-    var type: String?
-    var filters: [Filter]
-    var pick: Pick?
-}
+    private static let attrSpecs: [String: AttrSpec] = [
+        "enabled": .bool(.isEnabled, invert: false),
+        "isenabled": .bool(.isEnabled, invert: false),
+        "selected": .bool(.isSelected, invert: false),
+        "isselected": .bool(.isSelected, invert: false),
+        "focused": .bool(.hasFocus, invert: false),
+        "hasfocus": .bool(.hasFocus, invert: false),
+        "disabled": .bool(.isEnabled, invert: true),
+        "identifier": .string(.identifier),
+        "title": .string(.title),
+        "label": .string(.label),
+        "value": .string(.value),
+        "placeholder": .string(.placeholderValue),
+        "placeholdervalue": .string(.placeholderValue),
+    ]
 
-private enum StepToken {
-    case filter(Filter)
-    case pick(Pick)
-}
-
-private struct StepCoreParser: Parser {
-    func parse(_ input: inout Substring) throws -> StepCore {
-        let type = Optionally { IdentifierParser() }.parse(&input)?.lowercased()
-        let tokens = try Many {
-            StepTokenParser(allowHas: true, allowOnly: true, allowPick: true)
-        } terminator: {
-            Not { StepTokenStartParser() }
-        }
-        .parse(&input)
-
-        return try assembleStep(type: type, tokens: tokens)
-    }
-}
-
-private struct SimpleStepParser: Parser {
-    func parse(_ input: inout Substring) throws -> SimpleStep {
-        let type = Optionally { IdentifierParser() }.parse(&input)?.lowercased()
-        let tokens = try Many {
-            Parse {
-                OptionalWhitespaceParser()
-                StepTokenParser(allowHas: false, allowOnly: false, allowPick: false)
-            }
-        } terminator: {
-            Not { SimpleTokenStartParser() }
-        }
-        .parse(&input)
-
-        var filters: [Filter] = []
-        filters.reserveCapacity(tokens.count)
-        for token in tokens {
-            guard case let .filter(filter) = token else {
-                throw SelectorParseError.expected("filter")
-            }
-            filters.append(filter)
-        }
-
+    private static func makeStep(type: String?, filters: [Filter], pick: Pick?) throws -> StepCore {
         guard type != nil || !filters.isEmpty else {
-            throw SelectorParseError.expected("simple step")
+            throw SelectorParseError.expected("step")
         }
-
-        return SimpleStep(type: type, filters: filters)
+        return StepCore(type: type, filters: filters, pick: pick)
     }
-}
 
-private struct StepTokenParser: Parser {
-    let allowHas: Bool
-    let allowOnly: Bool
-    let allowPick: Bool
-
-    func parse(_ input: inout Substring) throws -> StepToken {
-        guard let char = input.first else {
-            throw SelectorParseError.expected("filter")
-        }
-        switch char {
-        case "[":
-            return try BracketTokenParser(allowPick: allowPick).parse(&input)
-        case ":":
-            return try PseudoTokenParser(allowHas: allowHas, allowOnly: allowOnly).parse(&input)
-        default:
-            throw SelectorParseError.expected("filter")
-        }
-    }
-}
-
-private struct StepTokenStartParser: Parser {
-    func parse(_ input: inout Substring) throws {
-        guard let char = input.first, char == "[" || char == ":" else {
-            throw SelectorParseError.expected("filter")
-        }
-        input.removeFirst()
-    }
-}
-
-private struct SimpleTokenStartParser: Parser {
-    func parse(_ input: inout Substring) throws {
-        var snapshot = input
-        skipWhitespace(&snapshot)
-        guard let char = snapshot.first, char == "[" || char == ":" else {
-            throw SelectorParseError.expected("filter")
-        }
-        snapshot.removeFirst()
-        input = snapshot
-    }
-}
-
-private struct IdentifierParser: Parser {
-    func parse(_ input: inout Substring) throws -> String {
-        guard let first = input.first, isIdentStart(first) else {
-            throw SelectorParseError.expected("identifier")
-        }
-        var index = input.index(after: input.startIndex)
-        while index < input.endIndex, isIdentChar(input[index]) {
-            index = input.index(after: index)
-        }
-        let value = String(input[..<index])
-        input = input[index...]
-        return value
-    }
-}
-
-private struct QuotedStringParser: Parser {
-    func parse(_ input: inout Substring) throws -> String {
-        guard input.first == "\"" else {
-            throw SelectorParseError.expected("\"")
-        }
-        input.removeFirst()
-        var result = ""
-        while let char = input.first {
-            input.removeFirst()
-            if char == "\"" {
-                return result
-            }
-            if char == "\\" {
-                guard let esc = input.first else {
-                    throw SelectorParseError.unexpectedEnd(expected: "escape")
-                }
-                input.removeFirst()
-                switch esc {
-                case "\\":
-                    result.append("\\")
-                case "\"":
-                    result.append("\"")
-                case "n":
-                    result.append("\n")
-                case "r":
-                    result.append("\r")
-                case "t":
-                    result.append("\t")
-                default:
-                    throw SelectorParseError.invalidEscape(String(esc))
-                }
-                continue
-            }
-            result.append(char)
-        }
-        throw SelectorParseError.unexpectedEnd(expected: "\"")
-    }
-}
-
-private struct CaseFlagParser: Parser {
-    func parse(_ input: inout Substring) throws -> CaseFlag {
-        var snapshot = input
-        skipWhitespace(&snapshot)
-        guard let char = snapshot.first else {
-            throw SelectorParseError.expected("case flag")
-        }
-        let lower = String(char).lowercased()
-        guard lower == "i" || lower == "s" else {
-            throw SelectorParseError.expected("case flag")
-        }
-        snapshot.removeFirst()
-        if let next = snapshot.first, !next.isWhitespace, next != "]", next != ")", next != "," {
-            throw SelectorParseError.expected("case flag")
-        }
-        input = snapshot
-        return lower == "i" ? .i : .s
-    }
-}
-
-private struct MatchOperatorParser: Parser {
-    func parse(_ input: inout Substring) throws -> StringMatch {
-        if input.first == "*", input.dropFirst().first == "=" {
-            input.removeFirst(2)
-            return .contains
-        }
-        if input.first == "^", input.dropFirst().first == "=" {
-            input.removeFirst(2)
-            return .begins
-        }
-        if input.first == "$", input.dropFirst().first == "=" {
-            input.removeFirst(2)
-            return .ends
-        }
-        if input.first == "~", input.dropFirst().first == "=" {
-            input.removeFirst(2)
-            return .regex
-        }
-        if input.first == "=" {
-            input.removeFirst()
-            return .eq
-        }
-        if let char = input.first {
-            throw SelectorParseError.unexpectedCharacter(char, expected: "match operator")
-        }
-        throw SelectorParseError.unexpectedEnd(expected: "match operator")
-    }
-}
-
-private struct BoolLiteralParser: Parser {
-    func parse(_ input: inout Substring) throws -> Bool {
-        let value = try IdentifierParser().parse(&input).lowercased()
-        switch value {
-        case "true": return true
-        case "false": return false
-        default:
-            throw SelectorParseError.invalidBoolean(value)
-        }
-    }
-}
-
-private struct IntLiteralParser: Parser {
-    func parse(_ input: inout Substring) throws -> Int {
-        guard let first = input.first, first == "-" || isDigit(first) else {
-            throw SelectorParseError.expected("integer")
-        }
-        var index = input.startIndex
-        if input[index] == "-" {
-            index = input.index(after: index)
-        }
-        guard index < input.endIndex, isDigit(input[index]) else {
-            throw SelectorParseError.expected("integer")
-        }
-        var end = index
-        while end < input.endIndex, isDigit(input[end]) {
-            end = input.index(after: end)
-        }
-        let value = String(input[..<end])
-        guard let intValue = Int(value) else {
-            throw SelectorParseError.invalidNumber(value)
-        }
-        input = input[end...]
-        return intValue
-    }
-}
-
-private struct BracketTokenParser: Parser {
-    let allowPick: Bool
-
-    func parse(_ input: inout Substring) throws -> StepToken {
-        try consume("[", from: &input)
-        skipWhitespace(&input)
-
-        if input.first == "\"" {
-            let text = try QuotedStringParser().parse(&input)
-            let caseFlag = (try? CaseFlagParser().parse(&input)) ?? .s
-            skipWhitespace(&input)
-            try consume("]", from: &input)
-            return .filter(.shorthand(text, caseFlag))
-        }
-
-        if let char = input.first, char == "-" || isDigit(char) {
-            guard allowPick else {
-                throw SelectorParseError.expected("filter")
-            }
-            let index = try IntLiteralParser().parse(&input)
-            skipWhitespace(&input)
-            try consume("]", from: &input)
-            return .pick(.index(index))
-        }
-
-        var negated = false
-        if input.first == "!" {
-            input.removeFirst()
-            negated = true
-            skipWhitespace(&input)
-        }
-
-        let name = try IdentifierParser().parse(&input)
-        let nameLower = name.lowercased()
-        skipWhitespace(&input)
-
-        if input.first == "]" {
-            input.removeFirst()
-            if let (field, value) = boolFilterValue(nameLower: nameLower, explicit: nil, negated: negated) {
-                return .filter(.attrBool(field: field, value: value))
-            }
-            throw SelectorParseError.invalidIdentifier(name)
-        }
-
-        if negated {
+    private static func buildAttrFilter(
+        nameLower: String,
+        negated: Bool,
+        match: (StringMatch, AttrValue)?
+    ) throws -> Filter {
+        if match != nil, negated {
             throw SelectorParseError.expected("bool filter")
         }
-
-        let matchType = try MatchOperatorParser().parse(&input)
-
-        if let boolField = parseBoolField(nameLower), matchType == .eq {
-            skipWhitespace(&input)
-            let boolValue = try BoolLiteralParser().parse(&input)
-            skipWhitespace(&input)
-            try consume("]", from: &input)
-            if nameLower == "disabled" {
-                return .filter(.attrBool(field: .isEnabled, value: !boolValue))
-            }
-            return .filter(.attrBool(field: boolField, value: boolValue))
+        guard let spec = attrSpecs[nameLower] else {
+            throw SelectorParseError.invalidIdentifier(nameLower)
         }
-
-        guard let field = parseStringField(nameLower) else {
-            if parseBoolField(nameLower) != nil {
+        switch spec {
+        case let .bool(field, invert):
+            if let match {
+                let (op, value) = match
+                guard op == .eq, case let .bool(boolValue) = value else {
+                    throw SelectorParseError.expected("boolean")
+                }
+                return .attrBool(field: field, value: invert ? !boolValue : boolValue)
+            }
+            var value = !invert
+            if negated {
+                value.toggle()
+            }
+            return .attrBool(field: field, value: value)
+        case let .string(field):
+            guard let match else {
+                throw SelectorParseError.invalidIdentifier(nameLower)
+            }
+            let (op, value) = match
+            guard case let .string(text, flag) = value else {
                 throw SelectorParseError.expected("boolean")
             }
-            throw SelectorParseError.invalidIdentifier(name)
-        }
-
-        skipWhitespace(&input)
-        let value = try QuotedStringParser().parse(&input)
-        let caseFlag = (try? CaseFlagParser().parse(&input)) ?? .s
-        skipWhitespace(&input)
-        try consume("]", from: &input)
-
-        return .filter(.attrString(field: field, match: matchType, value: value, caseFlag: caseFlag))
-    }
-}
-
-private struct PseudoTokenParser: Parser {
-    let allowHas: Bool
-    let allowOnly: Bool
-
-    func parse(_ input: inout Substring) throws -> StepToken {
-        try consume(":", from: &input)
-        let name = try IdentifierParser().parse(&input).lowercased()
-
-        if name == "only" {
-            guard allowOnly else {
-                throw SelectorParseError.expected("filter")
-            }
-            return .pick(.only)
-        }
-
-        skipWhitespace(&input)
-        try consume("(", from: &input)
-        skipWhitespace(&input)
-
-        switch name {
-        case "has":
-            guard allowHas else {
-                throw SelectorParseError.invalidIdentifier(name)
-            }
-            let step = try SimpleStepParser().parse(&input)
-            skipWhitespace(&input)
-            try consume(")", from: &input)
-            return .filter(.has(step))
-        case "not":
-            let step = try SimpleStepParser().parse(&input)
-            skipWhitespace(&input)
-            try consume(")", from: &input)
-            return .filter(.not(step))
-        case "is":
-            var steps: [SimpleStep] = []
-            while true {
-                let step = try SimpleStepParser().parse(&input)
-                steps.append(step)
-                skipWhitespace(&input)
-                if input.first == "," {
-                    input.removeFirst()
-                    skipWhitespace(&input)
-                    continue
-                }
-                try consume(")", from: &input)
-                break
-            }
-            return .filter(.isMatch(steps))
-        case "predicate":
-            skipWhitespace(&input)
-            let value = try QuotedStringParser().parse(&input)
-            skipWhitespace(&input)
-            try consume(")", from: &input)
-            return .filter(.predicate(value))
-        default:
-            throw SelectorParseError.invalidIdentifier(name)
-        }
-    }
-}
-
-private func assembleStep(type: String?, tokens: [StepToken]) throws -> StepCore {
-    var filters: [Filter] = []
-    var pick: Pick?
-    var parsedAnything = type != nil
-
-    for token in tokens {
-        switch token {
-        case let .filter(filter):
-            if pick != nil {
-                throw SelectorParseError.unexpectedToken("picker must be last in step")
-            }
-            filters.append(filter)
-            parsedAnything = true
-        case let .pick(value):
-            if pick != nil {
-                throw SelectorParseError.unexpectedToken("multiple pickers in step")
-            }
-            guard parsedAnything else {
-                throw SelectorParseError.expected("step")
-            }
-            pick = value
+            return .attrString(field: field, match: op, value: text, caseFlag: flag)
         }
     }
 
-    if pick != nil, let last = tokens.last, case .pick = last {
-        // ok
-    } else if pick != nil {
-        throw SelectorParseError.unexpectedToken("picker must be last in step")
-    }
-
-    guard parsedAnything else {
-        throw SelectorParseError.expected("step")
-    }
-
-    return StepCore(type: type, filters: filters, pick: pick)
-}
-
-private struct OptionalWhitespaceParser: Parser {
-    func parse(_ input: inout Substring) throws {
-        skipWhitespace(&input)
-    }
-}
-
-private struct RequiredWhitespaceParser: Parser {
-    func parse(_ input: inout Substring) throws {
-        let start = input.startIndex
-        skipWhitespace(&input)
-        if input.startIndex == start {
-            throw SelectorParseError.expected("whitespace")
+    private static func validate<T>(_ work: () throws -> T) -> P<T> {
+        do {
+            return try Always(work()).eraseToAnyParser()
+        } catch {
+            return Fail(throwing: error).eraseToAnyParser()
         }
-    }
-}
-
-private func consume(_ char: Character, from input: inout Substring) throws {
-    guard let current = input.first else {
-        throw SelectorParseError.unexpectedEnd(expected: "'\(char)'")
-    }
-    guard current == char else {
-        throw SelectorParseError.unexpectedCharacter(current, expected: "'\(char)'")
-    }
-    input.removeFirst()
-}
-
-private func skipWhitespace(_ input: inout Substring) {
-    while let char = input.first, char.isWhitespace {
-        input.removeFirst()
-    }
-}
-
-private func boolFilterValue(nameLower: String, explicit: Bool?, negated: Bool) -> (BoolField, Bool)? {
-    if nameLower == "disabled" {
-        var value = explicit.map { !$0 } ?? false
-        if negated {
-            value.toggle()
-        }
-        return (.isEnabled, value)
-    }
-    guard let field = parseBoolField(nameLower) else {
-        return nil
-    }
-    var value = explicit ?? true
-    if negated {
-        value.toggle()
-    }
-    return (field, value)
-}
-
-private func parseBoolField(_ nameLower: String) -> BoolField? {
-    switch nameLower {
-    case "enabled", "isenabled": return .isEnabled
-    case "selected", "isselected": return .isSelected
-    case "focused", "hasfocus": return .hasFocus
-    case "disabled": return .isEnabled
-    default: return nil
-    }
-}
-
-private func parseStringField(_ nameLower: String) -> StringField? {
-    switch nameLower {
-    case "identifier": return .identifier
-    case "title": return .title
-    case "label": return .label
-    case "value": return .value
-    case "placeholder", "placeholdervalue": return .placeholderValue
-    default: return nil
     }
 }
 
 private func isIdentStart(_ char: Character) -> Bool {
-    return (char >= "A" && char <= "Z") || (char >= "a" && char <= "z") || char == "_"
+    (char >= "A" && char <= "Z") || (char >= "a" && char <= "z") || char == "_"
 }
 
 private func isIdentChar(_ char: Character) -> Bool {
-    return isIdentStart(char) || isDigit(char)
+    isIdentStart(char) || isDigit(char)
 }
 
 private func isDigit(_ char: Character) -> Bool {
-    return char >= "0" && char <= "9"
+    char >= "0" && char <= "9"
 }
 
 // MARK: - Compiler
@@ -957,88 +746,10 @@ struct SelectorCompiler {
     }
 }
 
-private let elementTypeRawValues: [String: Int] = [
-    "any": 0,
-    "other": 1,
-    "application": 2,
-    "group": 3,
-    "window": 4,
-    "sheet": 5,
-    "drawer": 6,
-    "alert": 7,
-    "dialog": 8,
-    "button": 9,
-    "radiobutton": 10,
-    "radiogroup": 11,
-    "checkbox": 12,
-    "disclosuretriangle": 13,
-    "popupbutton": 14,
-    "combobox": 15,
-    "menubutton": 16,
-    "toolbarbutton": 17,
-    "popover": 18,
-    "keyboard": 19,
-    "key": 20,
-    "navigationbar": 21,
-    "tabbar": 22,
-    "tabgroup": 23,
-    "toolbar": 24,
-    "statusbar": 25,
-    "table": 26,
-    "tablerow": 27,
-    "tablecolumn": 28,
-    "outline": 29,
-    "outlinerow": 30,
-    "browser": 31,
-    "collectionview": 32,
-    "slider": 33,
-    "pageindicator": 34,
-    "progressindicator": 35,
-    "activityindicator": 36,
-    "segmentedcontrol": 37,
-    "picker": 38,
-    "pickerwheel": 39,
-    "switch": 40,
-    "toggle": 41,
-    "link": 42,
-    "image": 43,
-    "icon": 44,
-    "searchfield": 45,
-    "scrollview": 46,
-    "scrollbar": 47,
-    "statictext": 48,
-    "textfield": 49,
-    "securetextfield": 50,
-    "datepicker": 51,
-    "textview": 52,
-    "menu": 53,
-    "menuitem": 54,
-    "menubar": 55,
-    "menubaritem": 56,
-    "map": 57,
-    "webview": 58,
-    "incrementarrow": 59,
-    "decrementarrow": 60,
-    "timeline": 61,
-    "ratingindicator": 62,
-    "valueindicator": 63,
-    "splitgroup": 64,
-    "splitter": 65,
-    "relevanceindicator": 66,
-    "colorwell": 67,
-    "helptag": 68,
-    "matte": 69,
-    "dockitem": 70,
-    "ruler": 71,
-    "rulermarker": 72,
-    "grid": 73,
-    "levelindicator": 74,
-    "cell": 75,
-    "layoutarea": 76,
-    "layoutitem": 77,
-    "handle": 78,
-    "stepper": 79,
-    "tab": 80,
-    "touchbar": 81,
-    "statusitem": 82,
-]
+private let elementTypeRawValues: [String: Int] = {
+    // Order matches XCUIElement.ElementType raw values.
+    let names = """
+    any other application group window sheet drawer alert dialog button radiobutton radiogroup checkbox disclosuretriangle popupbutton combobox menubutton toolbarbutton popover keyboard key navigationbar tabbar tabgroup toolbar statusbar table tablerow tablecolumn outline outlinerow browser collectionview slider pageindicator progressindicator activityindicator segmentedcontrol picker pickerwheel switch toggle link image icon searchfield scrollview scrollbar statictext textfield securetextfield datepicker textview menu menuitem menubar menubaritem map webview incrementarrow decrementarrow timeline ratingindicator valueindicator splitgroup splitter relevanceindicator colorwell helptag matte dockitem ruler rulermarker grid levelindicator cell layoutarea layoutitem handle stepper tab touchbar statusitem
+    """
+    return Dictionary(uniqueKeysWithValues: names.split(separator: " ").enumerated().map { (String($0.element), $0.offset) })
+}()
