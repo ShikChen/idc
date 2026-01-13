@@ -23,21 +23,24 @@ struct Tap: AsyncParsableCommand {
             throw ValidationError("Provide a selector or --at.")
         }
 
-        let program: SelectorProgram?
+        let plan: ExecutionPlan?
         if let selector {
             var parser = SelectorParser(selector)
             do {
-                program = try parser.parseSelector()
+                let parsed = try parser.parseSelector()
+                plan = try SelectorCompiler().compile(parsed)
             } catch let error as SelectorParseError {
+                throw ValidationError(error.description)
+            } catch let error as SelectorCompileError {
                 throw ValidationError(error.description)
             }
         } else {
-            program = nil
+            plan = nil
         }
 
         let point: TapPoint?
         if let at {
-            let space: TapPointSpace = program == nil ? .screen : .element
+            let space: TapPointSpace = plan == nil ? .screen : .element
             point = try TapPoint(space: space, point: parseTapPoint(at))
         } else {
             point = nil
@@ -51,7 +54,7 @@ struct Tap: AsyncParsableCommand {
             }
         }
 
-        let request = TapRequest(selector: program, at: point)
+        let request = TapRequest(plan: plan, at: point)
         let (data, response) = try await postJSON(path: "/tap", body: request, timeout: timeout)
         guard response.statusCode == 200 else {
             if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
@@ -117,7 +120,7 @@ private func parsePointComponent(_ raw: String) throws -> PointComponent {
 }
 
 struct TapRequest: Encodable {
-    let selector: SelectorProgram?
+    let plan: ExecutionPlan?
     let at: TapPoint?
 }
 
