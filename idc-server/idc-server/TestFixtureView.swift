@@ -3,6 +3,7 @@ import SwiftUI
 struct TestFixtureView: View {
     @State private var email: String = "hello"
     @State private var featureEnabled: Bool = true
+    @State private var notificationsEnabled: Bool = false
     @State private var tapCount: Int = 0
 
     var body: some View {
@@ -22,6 +23,7 @@ struct TestFixtureView: View {
 
             Button("Reset Tap Count") {
                 tapCount = 0
+                notificationsEnabled = false
             }
             .accessibilityIdentifier("reset-button")
 
@@ -36,8 +38,8 @@ struct TestFixtureView: View {
                     .disabled(true)
                     .accessibilityIdentifier("disabled-button")
             }
-            .accessibilityIdentifier("button-group")
             .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("button-group")
 
             HStack(spacing: 8) {
                 Text("Left")
@@ -45,8 +47,8 @@ struct TestFixtureView: View {
                 Button("Child") {}
                     .accessibilityIdentifier("child-button")
             }
-            .accessibilityIdentifier("row-container")
             .accessibilityElement(children: .contain)
+            .accessibilityIdentifier("row-container")
 
             TextField("Email", text: $email)
                 .textFieldStyle(.roundedBorder)
@@ -56,11 +58,17 @@ struct TestFixtureView: View {
                 .disabled(true)
                 .accessibilityIdentifier("feature-toggle")
 
+            Text("Notifications: \(notificationsEnabled ? "On" : "Off")")
+                .accessibilityIdentifier("notifications-state")
+
+            Toggle("Notifications", isOn: $notificationsEnabled)
+                .accessibilityIdentifier("notifications-toggle")
+
             DisabledSwitchView(label: "Disabled Switch", identifier: "disabled-switch")
         }
         .padding()
-        .accessibilityIdentifier("root")
         .accessibilityElement(children: .contain)
+        .accessibilityIdentifier("root")
     }
 }
 

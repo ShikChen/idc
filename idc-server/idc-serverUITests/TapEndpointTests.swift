@@ -173,6 +173,25 @@ final class TapEndpointTests: XCTestCase {
         XCTAssertEqual(response.selected?.label, "Disabled")
     }
 
+    func testTapToggleSwitch() async throws {
+        let plan = plan(
+            .descendants(type: "switch"),
+            .matchIdentifier("notifications-toggle")
+        )
+        await MainActor.run {
+            let app = XCUIApplication()
+            let label = app.staticTexts["Notifications: Off"]
+            XCTAssertTrue(label.waitForExistence(timeout: 5))
+        }
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.identifier, "notifications-toggle")
+        await MainActor.run {
+            let app = XCUIApplication()
+            let label = app.staticTexts["Notifications: On"]
+            XCTAssertTrue(label.waitForExistence(timeout: 5))
+        }
+    }
+
     private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
         ExecutionPlan(pipeline: ops)
     }

@@ -8,3 +8,4 @@
 ## 注意事項
 
 - `CLAUDE.md` 和 `GEMINI.md` 都是指向本文件 `AGENTS.md` 的 symlink
+- 發現 bug 時，請先參考 `docs/pitfalls.md` 以避免重複踩雷
