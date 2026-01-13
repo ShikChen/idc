@@ -7,7 +7,6 @@ struct TapRequest: Codable {
 }
 
 struct TapResponse: Codable {
-    let matched: Int
     let selected: TapElement?
 }
 

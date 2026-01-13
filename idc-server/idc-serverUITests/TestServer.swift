@@ -167,14 +167,13 @@ private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResp
                 if tapRequest.plan == nil && tapRequest.at == nil {
                     throw PlanError.invalidPlan("Missing selector or tap point.")
                 }
-                let result = try executor.resolve(tapRequest.plan, from: app)
-                let selected = result.selected
+                let selected = try executor.resolve(tapRequest.plan, from: app)
                 if tapRequest.at == nil, selected == nil {
                     throw PlanError.noMatches
                 }
                 try performTap(app: app, element: selected, point: tapRequest.at)
                 let tapped = selected.map { TapElement(from: $0) }
-                return TapResponse(matched: result.matched, selected: tapped)
+                return TapResponse(selected: tapped)
             }
         } catch let error as PlanError {
             lastError = error

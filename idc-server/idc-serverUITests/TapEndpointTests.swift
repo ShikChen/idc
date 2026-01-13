@@ -102,17 +102,17 @@ final class TapEndpointTests: XCTestCase {
             .matchPredicate("(label == \"Primary\") OR (label == \"Secondary\")")
         )
         let (response, _) = try await postTap(plan)
-        XCTAssertEqual(response.matched, 2)
         XCTAssertEqual(response.selected?.label, "Primary")
     }
 
     func testTapPredicateNot() async throws {
         let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("root"),
             .descendants(type: "button"),
             .matchPredicate("NOT (label == \"Secondary\")")
         )
         let (response, _) = try await postTap(plan)
-        XCTAssertGreaterThanOrEqual(response.matched, 2)
         XCTAssertNotEqual(response.selected?.label, "Secondary")
     }
 

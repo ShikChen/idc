@@ -123,9 +123,9 @@ enum PlanNode {
 }
 
 struct PlanExecutor {
-    func resolve(_ plan: ExecutionPlan?, from root: XCUIElement) throws -> (matched: Int, selected: XCUIElement?) {
+    func resolve(_ plan: ExecutionPlan?, from root: XCUIElement) throws -> XCUIElement? {
         guard let plan, !plan.pipeline.isEmpty else {
-            return (1, root)
+            return root
         }
 
         var node: PlanNode = .element(root)
@@ -136,12 +136,11 @@ struct PlanExecutor {
 
         switch node {
         case let .element(element):
-            return (1, element)
+            return element
         case let .query(query):
-            let count = query.count
-            guard count > 0 else { throw PlanError.noMatches }
             let first = query.firstMatch
-            return (count, first.exists ? first : nil)
+            guard first.exists else { throw PlanError.noMatches }
+            return first
         }
     }
 
