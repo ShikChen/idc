@@ -164,4 +164,20 @@
 - Replaced 4 instances of duplicated error message construction
 - Centralizes the user-facing error message for server connectivity issues
 
-## Split SelectorDSL.swift into separate files
+## Split SelectorDSL.swift into separate files ✓
+
+### TODO
+
+- [x] Create `SelectorTypes.swift` with AST, ExecutionPlan, and Error types (lines 1-165)
+- [x] Create `SelectorParser.swift` with parser implementation (lines 166-548)
+- [x] Create `SelectorCompiler.swift` with compiler implementation (lines 549-end)
+- [x] Remove original `SelectorDSL.swift`
+
+### Summary
+
+- Split 770-line `SelectorDSL.swift` into 3 focused files:
+  - `SelectorTypes.swift` (~160 lines): AST, ExecutionPlan, ExecutionOp, and error types
+  - `SelectorParser.swift` (~330 lines): Parser and DSL combinators
+  - `SelectorCompiler.swift` (~220 lines): Compiler and predicate generation
+- Each file now has a clear single responsibility
+- All existing tests continue to pass
