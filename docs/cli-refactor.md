@@ -149,6 +149,19 @@
 - Replaced 3 instances of duplicated UDID validation logic with single function call
 - Each command now uses `try await validateUDID(udid, timeout: timeout)`
 
-## Extract `serverUnreachableError()` helper
+## Extract `serverUnreachableError()` helper ✓
+
+### TODO
+
+- [x] Add `serverUnreachableError()` function to `Support.swift`
+- [x] Replace duplicated error in `DescribeUI.swift`
+- [x] Replace duplicated error in `Screenshot.swift`
+- [x] Replace duplicated errors in `Support.swift` (2 places)
+
+### Summary
+
+- Added `serverUnreachableError(_ error:) -> ValidationError` helper to `Support.swift`
+- Replaced 4 instances of duplicated error message construction
+- Centralizes the user-facing error message for server connectivity issues
 
 ## Split SelectorDSL.swift into separate files

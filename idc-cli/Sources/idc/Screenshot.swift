@@ -18,7 +18,7 @@ struct Screenshot: AsyncParsableCommand {
         do {
             data = try await fetchData(path: "/screenshot", timeout: timeout)
         } catch {
-            throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+            throw serverUnreachableError(error)
         }
 
         if output == "-" {

@@ -20,7 +20,7 @@ struct DescribeUI: AsyncParsableCommand {
         do {
             data = try await fetchData(path: "/describe-ui", timeout: timeout)
         } catch {
-            throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+            throw serverUnreachableError(error)
         }
 
         try await validateUDID(udid, timeout: timeout)

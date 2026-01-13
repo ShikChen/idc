@@ -5,6 +5,10 @@ struct InfoResponse: Decodable {
     let udid: String?
 }
 
+func serverUnreachableError(_ error: Error) -> ValidationError {
+    ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+}
+
 func validateUDID(_ expectedUDID: String?, timeout: TimeInterval) async throws {
     guard let expectedUDID else { return }
     let info: InfoResponse = try await fetchJSON(path: "/info", timeout: timeout)
@@ -19,7 +23,7 @@ func fetchJSON<T: Decodable>(path: String, timeout: TimeInterval) async throws -
         let data = try await fetchData(path: path, timeout: timeout)
         return try JSONDecoder().decode(T.self, from: data)
     } catch {
-        throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+        throw serverUnreachableError(error)
     }
 }
 
@@ -46,6 +50,6 @@ func postJSON<T: Encodable>(path: String, body: T, timeout: TimeInterval) async 
         }
         return (data, httpResponse)
     } catch {
-        throw ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
+        throw serverUnreachableError(error)
     }
 }
