@@ -28,7 +28,15 @@
 - Added display of `placeholderValue` field in describe output
 - Added `formatJSONValue` helper to render JSONValue enum as readable string
 
-## Sources/idc/idc.swift
+## Sources/idc/idc.swift ✓
+
+### TODO
+
+- [x] Remove template comments at top of file
+
+### Summary
+
+- Removed Swift/ArgumentParser documentation URL comments from file header
 
 ## Sources/idc/Screenshot.swift
 
