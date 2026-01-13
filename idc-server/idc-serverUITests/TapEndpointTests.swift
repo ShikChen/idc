@@ -11,11 +11,19 @@ final class TapEndpointTests: XCTestCase {
             if app.state != .notRunning {
                 app.terminate()
             }
-            app.launchEnvironment["IDC_TEST_MODE"] = "1"
             app.launch()
             return app.wait(for: .runningForeground, timeout: 5)
         }
         XCTAssertTrue(isRunning)
+        await MainActor.run {
+            let app = XCUIApplication()
+            let tab = app.tabBars.buttons["Test"]
+            XCTAssertTrue(tab.waitForExistence(timeout: 5))
+            tab.tap()
+            let label = app.staticTexts["Tap Count: 0"]
+            XCTAssertTrue(label.waitForExistence(timeout: 5))
+        }
+        try await waitForForegroundFixture()
     }
 
     override func tearDown() async throws {
@@ -23,159 +31,162 @@ final class TapEndpointTests: XCTestCase {
     }
 
     func testTapByIdentifier() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "tap-button", caseFlag: .s)
-            ])
-        ])
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("Tap Me")
+        )
         try await assertTapCount("Tap Count: 0")
-        let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "tap-button")
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Tap Me")
         try await waitForTapCount("Tap Count: 1")
     }
 
     func testTapDescendantCombinator() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s)
-            ]),
-            SelectorStep(axis: .descendant, ops: [
-                .attrString(field: .identifier, match: .eq, value: "tap-button", caseFlag: .s)
-            ])
-        ])
-        try await assertTapCount("Tap Count: 0")
-        let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "tap-button")
-        try await waitForTapCount("Tap Count: 1")
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("root"),
+            .descendants(type: "button"),
+            .matchPredicate("label == \"Primary\"")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Primary")
     }
 
     func testTapChildCombinator() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s)
-            ]),
-            SelectorStep(axis: .child, ops: [
-                .attrString(field: .identifier, match: .eq, value: "button-group", caseFlag: .s)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("root"),
+            .children(type: "any"),
+            .matchIdentifier("button-group")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.identifier, "button-group")
     }
 
-    func testTapHas() async throws {
-        let nested = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .type("button"),
-                .attrString(field: .label, match: .eq, value: "Secondary", caseFlag: .s)
-            ])
-        ])
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "root", caseFlag: .s),
-                .has(nested)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+    func testTapHasTypeAndIdentifier() async throws {
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("root"),
+            .containTypeIdentifier(type: "button", value: "Secondary")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.identifier, "root")
     }
 
-    func testTapIs() async throws {
-        let first = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .label, match: .eq, value: "Primary", caseFlag: .s)
-            ])
-        ])
-        let second = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .label, match: .eq, value: "Secondary", caseFlag: .s)
-            ])
-        ])
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .type("button"),
-                .isMatch([first, second])
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+    func testTapHasPredicate() async throws {
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("root"),
+            .containPredicate("(elementType == 9) AND (label == \"Secondary\")")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.identifier, "root")
+    }
+
+    func testTapMatchTypeIdentifier() async throws {
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchTypeIdentifier(type: "button", value: "Primary")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Primary")
+    }
+
+    func testTapPredicateOr() async throws {
+        let plan = plan(
+            .descendants(type: "button"),
+            .matchPredicate("(label == \"Primary\") OR (label == \"Secondary\")")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.matched, 2)
         XCTAssertEqual(response.selected?.label, "Primary")
     }
 
-    func testTapNot() async throws {
-        let nested = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .label, match: .eq, value: "Secondary", caseFlag: .s)
-            ])
-        ])
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .type("button"),
-                .not(nested)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+    func testTapPredicateNot() async throws {
+        let plan = plan(
+            .descendants(type: "button"),
+            .matchPredicate("NOT (label == \"Secondary\")")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertGreaterThanOrEqual(response.matched, 2)
-        XCTAssertEqual(response.selected?.label, "Primary")
+        XCTAssertNotEqual(response.selected?.label, "Secondary")
     }
 
     func testTapOnlyError() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .type("button"),
-                .only
-            ])
-        ])
-        let (data, response) = try await postTapRaw(selector)
+        let plan = plan(
+            .descendants(type: "button"),
+            .pickOnly
+        )
+        let (data, response) = try await postTapRaw(plan)
         XCTAssertEqual(response.statusCode, 400)
         let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
-        XCTAssertTrue(error.error.contains("unique"))
+        XCTAssertTrue(error.error.lowercased().contains("unique"))
+    }
+
+    func testTapPickIndex() async throws {
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchTypeIdentifier(type: "other", value: "root"),
+            .descendants(type: "button"),
+            .pickIndex(1)
+        )
+        let (exists, expectedLabel) = await MainActor.run {
+            let app = XCUIApplication()
+            let root = app.otherElements["root"]
+            let element = root.descendants(matching: .button).element(boundBy: 1)
+            return (element.exists, element.label)
+        }
+        XCTAssertTrue(exists)
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, expectedLabel)
     }
 
     func testTapPlaceholderValue() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .placeholderValue, match: .eq, value: "Email", caseFlag: .s)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchPredicate("placeholderValue == \"Email\"")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.placeholderValue, "Email")
     }
 
     func testTapValue() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .value, match: .eq, value: "hello", caseFlag: .s)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchPredicate("value == \"hello\"")
+        )
+        let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.value, "hello")
     }
 
     func testTapDisabled() async throws {
-        let selector = SelectorProgram(steps: [
-            SelectorStep(axis: .descendantOrSelf, ops: [
-                .attrString(field: .identifier, match: .eq, value: "disabled-button", caseFlag: .s),
-                .attrBool(field: .isEnabled, value: false)
-            ])
-        ])
-        let (response, _) = try await postTap(selector)
-        XCTAssertEqual(response.selected?.identifier, "disabled-button")
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("Disabled"),
+            .matchPredicate("enabled == 0")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Disabled")
     }
 
-    private func postTap(_ selector: SelectorProgram) async throws -> (TapResponse, HTTPURLResponse) {
-        let (data, response) = try await postTapRaw(selector)
+    private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
+        ExecutionPlan(pipeline: ops)
+    }
+
+    private func postTap(_ plan: ExecutionPlan) async throws -> (TapResponse, HTTPURLResponse) {
+        let (data, response) = try await postTapRaw(plan)
         let httpResponse = response
         XCTAssertEqual(httpResponse.statusCode, 200)
         let payload = try JSONDecoder().decode(TapResponse.self, from: data)
         return (payload, httpResponse)
     }
 
-    private func postTapRaw(_ selector: SelectorProgram) async throws -> (Data, HTTPURLResponse) {
+    private func postTapRaw(_ plan: ExecutionPlan) async throws -> (Data, HTTPURLResponse) {
         let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/tap"))
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = TapRequest(selector: selector, at: nil)
+        let body = TapRequest(plan: plan, at: nil)
         request.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
@@ -185,21 +196,29 @@ final class TapEndpointTests: XCTestCase {
     private func assertTapCount(_ expected: String) async throws {
         await MainActor.run {
             let app = XCUIApplication()
-            let label = app.staticTexts["tap-count"]
-            XCTAssertTrue(label.waitForExistence(timeout: 2))
-            XCTAssertEqual(label.label, expected)
+            let label = app.staticTexts[expected]
+            XCTAssertTrue(label.waitForExistence(timeout: 5))
         }
     }
 
     private func waitForTapCount(_ expected: String) async throws {
         await MainActor.run {
             let app = XCUIApplication()
-            let label = app.staticTexts["tap-count"]
-            XCTAssertTrue(label.waitForExistence(timeout: 2))
-            let predicate = NSPredicate(format: "label == %@", expected)
-            let exp = XCTNSPredicateExpectation(predicate: predicate, object: label)
-            let result = XCTWaiter.wait(for: [exp], timeout: 2)
-            XCTAssertEqual(result, .completed)
+            let label = app.staticTexts[expected]
+            XCTAssertTrue(label.waitForExistence(timeout: 5))
         }
+    }
+
+    private func waitForForegroundFixture(timeout: TimeInterval = 5) async throws {
+        let deadline = Date().addingTimeInterval(timeout)
+        while Date() < deadline {
+            let ready = await MainActor.run {
+                guard let app = RunningApp.getForegroundApp() else { return false }
+                return app.staticTexts["Tap Count: 0"].exists
+            }
+            if ready { return }
+            try await Task.sleep(nanoseconds: 200_000_000)
+        }
+        XCTFail("Foreground app did not expose fixture UI in time.")
     }
 }

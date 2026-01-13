@@ -53,6 +53,10 @@ final class ServerEndpointsTests: XCTestCase {
         let appState = await MainActor.run {
             let app = XCUIApplication()
             app.launch()
+            let tab = app.tabBars.buttons["Test"]
+            if tab.waitForExistence(timeout: 5) {
+                tab.tap()
+            }
             return app.state
         }
         XCTAssertEqual(appState, .runningForeground)

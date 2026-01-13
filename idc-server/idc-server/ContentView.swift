@@ -9,16 +9,22 @@ import SwiftUI
 
 struct ContentView: View {
     var body: some View {
-        if ProcessInfo.processInfo.environment["IDC_TEST_MODE"] == "1" {
-            TestFixtureView()
-        } else {
-            VStack {
+        TabView {
+            VStack(spacing: 12) {
                 Image(systemName: "globe")
                     .imageScale(.large)
                     .foregroundStyle(.tint)
                 Text("Hello, world!")
             }
             .padding()
+            .tabItem {
+                Label("Home", systemImage: "house")
+            }
+
+            TestFixtureView()
+                .tabItem {
+                    Label("Test", systemImage: "hammer")
+                }
         }
     }
 }

@@ -2,7 +2,7 @@ import Foundation
 import XCTest
 
 struct TapRequest: Codable {
-    let selector: SelectorProgram?
+    let plan: ExecutionPlan?
     let at: TapPoint?
 }
 
@@ -19,6 +19,21 @@ enum TapPointSpace: String, Codable {
 struct TapPoint: Codable {
     let space: TapPointSpace
     let point: PointSpec
+}
+
+enum PointUnit: String, Codable {
+    case pt
+    case pct
+}
+
+struct PointComponent: Codable {
+    let value: Double
+    let unit: PointUnit
+}
+
+struct PointSpec: Codable {
+    let x: PointComponent
+    let y: PointComponent
 }
 
 struct TapElement: Codable {

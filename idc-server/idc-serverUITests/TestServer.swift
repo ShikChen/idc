@@ -134,24 +134,7 @@ actor TestServer {
         await server.appendRoute("/tap", for: [.POST]) { request in
             do {
                 let tapRequest = try JSONDecoder().decode(TapRequest.self, from: await request.bodyData)
-                let response = try await MainActor.run {
-                    guard let app = RunningApp.getForegroundApp() else {
-                        throw SelectorError.invalidQuery("No foreground app found.")
-                    }
-                    let matches: [XCUIElement]
-                    if let selector = tapRequest.selector {
-                        matches = try resolveSelector(selector, from: app)
-                        guard !matches.isEmpty else {
-                            throw SelectorError.noMatches
-                        }
-                    } else {
-                        matches = []
-                    }
-                    let selected = matches.first
-                    try performTap(app: app, element: selected, point: tapRequest.at)
-                    let tapped = selected.map { TapElement(from: $0) }
-                    return TapResponse(matched: matches.count, selected: tapped)
-                }
+                let response = try await resolveTapRequest(tapRequest)
                 let body = try JSONEncoder().encode(response)
                 return HTTPResponse(
                     statusCode: .ok,
@@ -172,6 +155,39 @@ actor TestServer {
     }
 }
 
+private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResponse {
+    let executor = PlanExecutor()
+    var lastError: Error?
+    for attempt in 0..<5 {
+        do {
+            return try await MainActor.run {
+                guard let app = RunningApp.getForegroundApp() else {
+                    throw PlanError.invalidPlan("No foreground app found.")
+                }
+                if tapRequest.plan == nil && tapRequest.at == nil {
+                    throw PlanError.invalidPlan("Missing selector or tap point.")
+                }
+                let result = try executor.resolve(tapRequest.plan, from: app)
+                let selected = result.selected
+                if tapRequest.at == nil, selected == nil {
+                    throw PlanError.noMatches
+                }
+                try performTap(app: app, element: selected, point: tapRequest.at)
+                let tapped = selected.map { TapElement(from: $0) }
+                return TapResponse(matched: result.matched, selected: tapped)
+            }
+        } catch let error as PlanError {
+            lastError = error
+            if case .noMatches = error, attempt < 4 {
+                try await Task.sleep(nanoseconds: 200_000_000)
+                continue
+            }
+            throw error
+        }
+    }
+    throw lastError ?? PlanError.noMatches
+}
+
 private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapPoint?) throws {
     if let point {
         switch point.space {
@@ -180,7 +196,7 @@ private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapP
             tapScreen(app: app, point: screenPoint)
         case .element:
             guard let element else {
-                throw SelectorError.invalidQuery("Missing selector for element-local tap.")
+                throw PlanError.invalidPlan("Missing selector for element-local tap.")
             }
             tapElement(element: element, point: point.point)
         }
@@ -188,7 +204,7 @@ private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapP
     }
 
     guard let element else {
-        throw SelectorError.invalidQuery("Missing selector or tap point.")
+        throw PlanError.invalidPlan("Missing selector or tap point.")
     }
     let center = element.coordinate(withNormalizedOffset: CGVector(dx: 0.5, dy: 0.5))
     center.tap()
