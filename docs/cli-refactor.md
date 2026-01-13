@@ -50,7 +50,17 @@
 - Code is well-structured with clear responsibility
 - Existing TODO comment is a valid future enhancement (simctl integration)
 
-## Sources/idc/SelectorDSL.swift
+## Sources/idc/SelectorDSL.swift ✓
+
+### TODO
+
+- [x] Break long element type string into multiple lines for readability
+
+### Summary
+
+- Converted `elementTypeRawValues` from single-line multiline string to array literal
+- Improved readability by breaking element types into multiple lines (~8 per line)
+- Simplified dictionary construction (no longer needs `.split(separator: " ")`)
 
 ## Sources/idc/ServerHealth.swift
 

@@ -748,8 +748,23 @@ struct SelectorCompiler {
 
 private let elementTypeRawValues: [String: Int] = {
     // Order matches XCUIElement.ElementType raw values.
-    let names = """
-    any other application group window sheet drawer alert dialog button radiobutton radiogroup checkbox disclosuretriangle popupbutton combobox menubutton toolbarbutton popover keyboard key navigationbar tabbar tabgroup toolbar statusbar table tablerow tablecolumn outline outlinerow browser collectionview slider pageindicator progressindicator activityindicator segmentedcontrol picker pickerwheel switch toggle link image icon searchfield scrollview scrollbar statictext textfield securetextfield datepicker textview menu menuitem menubar menubaritem map webview incrementarrow decrementarrow timeline ratingindicator valueindicator splitgroup splitter relevanceindicator colorwell helptag matte dockitem ruler rulermarker grid levelindicator cell layoutarea layoutitem handle stepper tab touchbar statusitem
-    """
-    return Dictionary(uniqueKeysWithValues: names.split(separator: " ").enumerated().map { (String($0.element), $0.offset) })
+    let names = [
+        "any", "other", "application", "group", "window", "sheet", "drawer",
+        "alert", "dialog", "button", "radiobutton", "radiogroup", "checkbox",
+        "disclosuretriangle", "popupbutton", "combobox", "menubutton",
+        "toolbarbutton", "popover", "keyboard", "key", "navigationbar",
+        "tabbar", "tabgroup", "toolbar", "statusbar", "table", "tablerow",
+        "tablecolumn", "outline", "outlinerow", "browser", "collectionview",
+        "slider", "pageindicator", "progressindicator", "activityindicator",
+        "segmentedcontrol", "picker", "pickerwheel", "switch", "toggle",
+        "link", "image", "icon", "searchfield", "scrollview", "scrollbar",
+        "statictext", "textfield", "securetextfield", "datepicker", "textview",
+        "menu", "menuitem", "menubar", "menubaritem", "map", "webview",
+        "incrementarrow", "decrementarrow", "timeline", "ratingindicator",
+        "valueindicator", "splitgroup", "splitter", "relevanceindicator",
+        "colorwell", "helptag", "matte", "dockitem", "ruler", "rulermarker",
+        "grid", "levelindicator", "cell", "layoutarea", "layoutitem", "handle",
+        "stepper", "tab", "touchbar", "statusitem",
+    ]
+    return Dictionary(uniqueKeysWithValues: names.enumerated().map { ($0.element, $0.offset) })
 }()
