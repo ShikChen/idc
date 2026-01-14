@@ -8,7 +8,7 @@
 - [x] Define behavior for empty/whitespace selector (e.g. error unless `--at`, or treat as root). Avoid implicit “tap app”. (gpt-old)
 - [x] Decide semantics for `plan == nil` vs empty plan in server responses (matched/selected should reflect actual selection). (gpt-new)
 - [x] Ensure query semantics for `query.descendants(...)` are documented and match intended behavior. (claude-new)
-- (TODO) Ensure `:has()` / `:is()` usage rules are consistent (e.g., can `:has(button)` be type-only?). If allowed, update grammar/implementation. (implied by claude-old ambiguity)
+- [x] Ensure `:has()` / `:is()` usage rules are consistent (e.g., can `:has(button)` be type-only?). If allowed, update grammar/implementation. (implied by claude-old ambiguity)
 - (TODO) Confirm `matching(identifier:)` / subscript semantics match Apple docs (identifier matches identifier/title/label/value/placeholder). (gpt-old)
 
 ## Error Handling / UX
