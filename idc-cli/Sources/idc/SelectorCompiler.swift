@@ -144,13 +144,7 @@ struct SelectorCompiler {
     }
 
     private func predicateForBool(field: BoolField, value: Bool) -> String {
-        let key: String
-        switch field {
-        case .isEnabled: key = "isEnabled"
-        case .isSelected: key = "isSelected"
-        case .hasFocus: key = "hasFocus"
-        }
-        return "\(key) == \(value ? 1 : 0)"
+        "\(field.rawValue) == \(value)"
     }
 
     private func predicateForShorthand(_ value: String, caseFlag: CaseFlag) -> String {

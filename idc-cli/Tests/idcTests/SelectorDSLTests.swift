@@ -90,37 +90,37 @@ final class SelectorDSLTests: XCTestCase {
         let enabled = try compile("[enabled]")
         XCTAssertEqual(enabled, plan(
             .descendants(type: "any"),
-            .matchPredicate("(isEnabled == 1)")
+            .matchPredicate("(isEnabled == true)")
         ))
 
         let disabled = try compile("[disabled]")
         XCTAssertEqual(disabled, plan(
             .descendants(type: "any"),
-            .matchPredicate("(isEnabled == 0)")
+            .matchPredicate("(isEnabled == false)")
         ))
 
         let enabledFalse = try compile("[enabled=false]")
         XCTAssertEqual(enabledFalse, plan(
             .descendants(type: "any"),
-            .matchPredicate("(isEnabled == 0)")
+            .matchPredicate("(isEnabled == false)")
         ))
 
         let notEnabled = try compile("[!enabled]")
         XCTAssertEqual(notEnabled, plan(
             .descendants(type: "any"),
-            .matchPredicate("(isEnabled == 0)")
+            .matchPredicate("(isEnabled == false)")
         ))
 
         let focused = try compile("[hasFocus]")
         XCTAssertEqual(focused, plan(
             .descendants(type: "any"),
-            .matchPredicate("(hasFocus == 1)")
+            .matchPredicate("(hasFocus == true)")
         ))
 
         let selected = try compile("[selected]")
         XCTAssertEqual(selected, plan(
             .descendants(type: "any"),
-            .matchPredicate("(isSelected == 1)")
+            .matchPredicate("(isSelected == true)")
         ))
     }
 
@@ -160,7 +160,7 @@ final class SelectorDSLTests: XCTestCase {
         let notProgram = try compile("button:not([enabled])")
         XCTAssertEqual(notProgram, plan(
             .descendants(type: "button"),
-            .matchPredicate("(NOT ((isEnabled == 1)))")
+            .matchPredicate("(NOT ((isEnabled == true)))")
         ))
     }
 
