@@ -28,6 +28,7 @@ enum PredicateArg: Equatable, Codable {
 enum PlanError: LocalizedError {
     case invalidType(String)
     case invalidPlan(String)
+    case invalidPredicate(String)
     case noMatches
     case notUnique
 
@@ -37,6 +38,8 @@ enum PlanError: LocalizedError {
             return "Unknown element type: \(value)."
         case let .invalidPlan(value):
             return value
+        case let .invalidPredicate(value):
+            return "Invalid predicate: \(value)."
         case .noMatches:
             return "No matching elements."
         case .notUnique:
@@ -122,7 +125,14 @@ struct PlanExecutor {
 
     private func predicateFromFormat(_ format: String, args: [PredicateArg]) throws -> NSPredicate {
         let resolvedArgs = try args.map { try resolvePredicateArg($0) }
-        return NSPredicate(format: format, argumentArray: resolvedArgs)
+        var errorMessage: NSString?
+        let predicate = ObjCExceptionCatcher.perform({
+            NSPredicate(format: format, argumentArray: resolvedArgs)
+        }, errorMessage: &errorMessage) as? NSPredicate
+        guard let predicate else {
+            throw PlanError.invalidPredicate(errorMessage as String? ?? "Invalid predicate.")
+        }
+        return predicate
     }
 
     private func resolvePredicateArg(_ arg: PredicateArg) throws -> Any {

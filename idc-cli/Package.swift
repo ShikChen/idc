@@ -13,12 +13,18 @@ let package = Package(
         .package(url: "https://github.com/swiftlang/swift-subprocess.git", branch: "main"),
     ],
     targets: [
+        .target(
+            name: "ObjCExceptionCatcher",
+            path: "Sources/ObjCExceptionCatcher",
+            publicHeadersPath: "include"
+        ),
         .executableTarget(
             name: "idc",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
                 .product(name: "Parsing", package: "swift-parsing"),
                 .product(name: "Subprocess", package: "swift-subprocess"),
+                "ObjCExceptionCatcher",
             ]
         ),
         .testTarget(

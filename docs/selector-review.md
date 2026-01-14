@@ -12,9 +12,9 @@
 - [x] Confirm `matching(identifier:)` / subscript semantics match Apple docs (identifier matches identifier/title/label/value/placeholder). (gpt-old)
 
 ## Error Handling / UX
-- (TODO) Improve error messages for string/bool filters (e.g. `[label]` should say missing operator/value, `[label=true]` should say expects string). (gpt-new)
-- (TODO) Make `:predicate(...)` failures user-friendly; optionally validate predicate format in CLI. (claude-new, gpt-old)
-- (TODO) Protect server from `NSPredicate` format crashes (Obj‑C try/catch shim or disable raw predicate). (gpt-old, gpt-new)
+- [x] Improve error messages for string/bool filters (e.g. `[label]` should say missing operator/value, `[label=true]` should say expects string). (gpt-new)
+- [x] Make `:predicate(...)` failures user-friendly; optionally validate predicate format in CLI. (claude-new, gpt-old)
+- [x] Protect server from `NSPredicate` format crashes (Obj‑C try/catch shim or disable raw predicate). (gpt-old, gpt-new)
 - (TODO) Provide clear error for unknown ops (CLI newer than server). (claude-new)
 - (TODO) Normalize error message style/capitalization and remove unused error cases. (claude-new, gpt-new)
 - (TODO) Consider structured error positions for parse failures (line/column). (claude-old)

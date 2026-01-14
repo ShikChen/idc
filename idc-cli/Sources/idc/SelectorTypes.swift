@@ -86,6 +86,7 @@ enum SelectorParseError: Error, CustomStringConvertible {
     case expected(String)
     case invalidNumber(String)
     case invalidEscape(String)
+    case invalidPredicate(String)
     case emptySelector
     case invalidIdentifier(String)
     case invalidBoolean(String)
@@ -105,6 +106,8 @@ enum SelectorParseError: Error, CustomStringConvertible {
             return "Invalid number: \(value)."
         case let .invalidEscape(value):
             return "Invalid escape sequence: \\ \(value)."
+        case let .invalidPredicate(value):
+            return "Invalid predicate: \(value)."
         case .emptySelector:
             return "Selector is empty."
         case let .invalidIdentifier(value):

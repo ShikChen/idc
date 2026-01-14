@@ -256,16 +256,44 @@ private enum DSL {
         }
         .map { first, rest in Filter.isMatch([first] + rest) }
 
-        let predicate = Parse { ":"; "predicate"; Whitespace(); "("; Whitespace(); quotedString(); Whitespace(); ")" }
-            .map(Filter.predicate)
+        let predicate = Parse {
+            ":"; "predicate"; Whitespace(); "("; Whitespace()
+            quotedString()
+                .flatMap { value in
+                    validate {
+                        do {
+                            try PredicateValidator.validate(value)
+                        } catch let error as PredicateValidationError {
+                            throw SelectorParseError.invalidPredicate(error.description)
+                        }
+                        return value
+                    }
+                }
+            Whitespace(); ")"
+        }
+        .map(Filter.predicate)
 
         let has = Parse { ":"; "has"; Whitespace(); "("; Whitespace(); simpleStep(); Whitespace(); ")" }
             .map(Filter.has)
 
-        if allowHas {
-            return OneOf { has; not; isMatch; predicate }.eraseToAnyParser()
+        return AnyParser { input in
+            var lookahead = input
+            try expectPrefix(":", in: &lookahead)
+            let name = try identifier().parse(&lookahead)
+            switch name.lowercased() {
+            case "has":
+                guard allowHas else { throw SelectorParseError.expected("filter") }
+                return try has.parse(&input)
+            case "not":
+                return try not.parse(&input)
+            case "is":
+                return try isMatch.parse(&input)
+            case "predicate":
+                return try predicate.parse(&input)
+            default:
+                throw SelectorParseError.unexpectedToken(name)
+            }
         }
-        return OneOf { not; isMatch; predicate }.eraseToAnyParser()
     }
 
     private static func pickParser(allowOnly: Bool) -> P<Pick> {

@@ -303,5 +303,8 @@ final class SelectorDSLTests: XCTestCase {
         let invalidAttr = parseError(#"button[foo="x"]"#)
         XCTAssertTrue(invalidAttr.contains("Invalid identifier"))
         XCTAssertTrue(invalidAttr.contains("input:1:8-10"))
+
+        let badPredicate = parseError(#"button:predicate("label ==")"#)
+        XCTAssertTrue(badPredicate.contains("Invalid predicate"))
     }
 }

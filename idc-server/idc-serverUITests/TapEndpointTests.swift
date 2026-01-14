@@ -122,6 +122,17 @@ final class TapEndpointTests: XCTestCase {
         XCTAssertNotEqual(response.selected?.label, "Secondary")
     }
 
+    func testTapInvalidPredicateFormat() async throws {
+        let plan = plan(
+            .descendants(type: "button"),
+            .matchPredicate(format: "label ==", args: [])
+        )
+        let (data, response) = try await postTapRaw(plan)
+        XCTAssertEqual(response.statusCode, 400)
+        let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
+        XCTAssertTrue(error.error.contains("Invalid predicate"))
+    }
+
     func testTapOnlyError() async throws {
         let plan = plan(
             .descendants(type: "button"),
