@@ -53,12 +53,12 @@ enum Pick: Equatable { case index(Int), only }
 
 // MARK: - Execution Plan
 
-struct ExecutionPlan: Equatable, Encodable {
+struct ExecutionPlan: Equatable, Codable {
     var version: Int = 3
     var pipeline: [ExecutionOp]
 }
 
-enum ExecutionOp: Equatable {
+enum ExecutionOp: Equatable, Codable {
     case descendants(type: String)
     case children(type: String)
     case matchIdentifier(String)
@@ -70,89 +70,11 @@ enum ExecutionOp: Equatable {
     case pickOnly
 }
 
-enum PredicateArg: Equatable {
+enum PredicateArg: Equatable, Codable {
     case string(String)
     case bool(Bool)
     case number(Double)
     case elementType(String)
-}
-
-extension PredicateArg: Encodable {
-    enum CodingKeys: String, CodingKey {
-        case kind
-        case value
-    }
-
-    enum Kind: String, Encodable {
-        case string
-        case bool
-        case number
-        case elementType
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case let .string(value):
-            try container.encode(Kind.string, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .bool(value):
-            try container.encode(Kind.bool, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .number(value):
-            try container.encode(Kind.number, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .elementType(value):
-            try container.encode(Kind.elementType, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        }
-    }
-}
-
-extension ExecutionOp: Encodable {
-    enum CodingKeys: String, CodingKey {
-        case op
-        case type
-        case value
-        case format
-        case args
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case let .descendants(type):
-            try container.encode("descendants", forKey: .op)
-            try container.encode(type, forKey: .type)
-        case let .children(type):
-            try container.encode("children", forKey: .op)
-            try container.encode(type, forKey: .type)
-        case let .matchIdentifier(value):
-            try container.encode("matchIdentifier", forKey: .op)
-            try container.encode(value, forKey: .value)
-        case let .matchTypeIdentifier(type, value):
-            try container.encode("matchTypeIdentifier", forKey: .op)
-            try container.encode(type, forKey: .type)
-            try container.encode(value, forKey: .value)
-        case let .matchPredicate(format, args):
-            try container.encode("matchPredicate", forKey: .op)
-            try container.encode(format, forKey: .format)
-            try container.encode(args, forKey: .args)
-        case let .containPredicate(format, args):
-            try container.encode("containPredicate", forKey: .op)
-            try container.encode(format, forKey: .format)
-            try container.encode(args, forKey: .args)
-        case let .containTypeIdentifier(type, value):
-            try container.encode("containTypeIdentifier", forKey: .op)
-            try container.encode(type, forKey: .type)
-            try container.encode(value, forKey: .value)
-        case let .pickIndex(value):
-            try container.encode("pickIndex", forKey: .op)
-            try container.encode(value, forKey: .value)
-        case .pickOnly:
-            try container.encode("pickOnly", forKey: .op)
-        }
-    }
 }
 
 // MARK: - Errors

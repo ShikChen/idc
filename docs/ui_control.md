@@ -237,15 +237,16 @@ The server executes the plan without re-parsing DSL semantics.
 {
   "version": 3,
   "pipeline": [
-    { "op": "descendants", "type": "any" },
-    { "op": "matchIdentifier", "value": "Settings" },
+    { "descendants": { "type": "any" } },
+    { "matchIdentifier": "Settings" },
     {
-      "op": "matchPredicate",
-      "format": "label == %@",
-      "args": [{ "kind": "string", "value": "OK" }]
+      "matchPredicate": {
+        "format": "label == %@",
+        "args": [{ "string": "OK" }]
+      }
     },
-    { "op": "children", "type": "button" },
-    { "op": "pickIndex", "value": -1 }
+    { "children": { "type": "button" } },
+    { "pickIndex":  -1 }
   ]
 }
 ```
@@ -265,7 +266,8 @@ The server executes the plan without re-parsing DSL semantics.
 - `matchPredicate`
   - `matching(NSPredicate(format:argumentArray:))`
   - `format` uses `%@` placeholders, `args` is ordered to match them
-  - `args.kind: elementType` is resolved on the server to the enum raw value
+  - `args` uses enum-case payloads, e.g. `{ "string": "OK" }`
+  - `elementType` args are resolved on the server to the enum raw value
   - `:predicate("...")` compiles to `format` with empty `args`
 
 - `containPredicate`

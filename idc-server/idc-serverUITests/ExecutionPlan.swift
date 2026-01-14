@@ -6,7 +6,7 @@ struct ExecutionPlan: Codable, Equatable {
     var pipeline: [ExecutionOp]
 }
 
-enum ExecutionOp: Equatable {
+enum ExecutionOp: Equatable, Codable {
     case descendants(type: String)
     case children(type: String)
     case matchIdentifier(String)
@@ -18,143 +18,11 @@ enum ExecutionOp: Equatable {
     case pickOnly
 }
 
-enum PredicateArg: Equatable {
+enum PredicateArg: Equatable, Codable {
     case string(String)
     case bool(Bool)
     case number(Double)
     case elementType(String)
-}
-
-extension PredicateArg: Codable {
-    enum CodingKeys: String, CodingKey {
-        case kind
-        case value
-    }
-
-    enum Kind: String, Codable {
-        case string
-        case bool
-        case number
-        case elementType
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let kind = try container.decode(Kind.self, forKey: .kind)
-        switch kind {
-        case .string:
-            self = .string(try container.decode(String.self, forKey: .value))
-        case .bool:
-            self = .bool(try container.decode(Bool.self, forKey: .value))
-        case .number:
-            self = .number(try container.decode(Double.self, forKey: .value))
-        case .elementType:
-            self = .elementType(try container.decode(String.self, forKey: .value))
-        }
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case let .string(value):
-            try container.encode(Kind.string, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .bool(value):
-            try container.encode(Kind.bool, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .number(value):
-            try container.encode(Kind.number, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        case let .elementType(value):
-            try container.encode(Kind.elementType, forKey: .kind)
-            try container.encode(value, forKey: .value)
-        }
-    }
-}
-
-extension ExecutionOp: Codable {
-    enum CodingKeys: String, CodingKey {
-        case op
-        case type
-        case value
-        case format
-        case args
-    }
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.container(keyedBy: CodingKeys.self)
-        let op = try container.decode(String.self, forKey: .op)
-        switch op {
-        case "descendants":
-            let type = try container.decode(String.self, forKey: .type)
-            self = .descendants(type: type)
-        case "children":
-            let type = try container.decode(String.self, forKey: .type)
-            self = .children(type: type)
-        case "matchIdentifier":
-            let value = try container.decode(String.self, forKey: .value)
-            self = .matchIdentifier(value)
-        case "matchTypeIdentifier":
-            let type = try container.decode(String.self, forKey: .type)
-            let value = try container.decode(String.self, forKey: .value)
-            self = .matchTypeIdentifier(type: type, value: value)
-        case "matchPredicate":
-            let format = try container.decode(String.self, forKey: .format)
-            let args = try container.decode([PredicateArg].self, forKey: .args)
-            self = .matchPredicate(format: format, args: args)
-        case "containPredicate":
-            let format = try container.decode(String.self, forKey: .format)
-            let args = try container.decode([PredicateArg].self, forKey: .args)
-            self = .containPredicate(format: format, args: args)
-        case "containTypeIdentifier":
-            let type = try container.decode(String.self, forKey: .type)
-            let value = try container.decode(String.self, forKey: .value)
-            self = .containTypeIdentifier(type: type, value: value)
-        case "pickIndex":
-            let value = try container.decode(Int.self, forKey: .value)
-            self = .pickIndex(value)
-        case "pickOnly":
-            self = .pickOnly
-        default:
-            throw DecodingError.dataCorruptedError(forKey: .op, in: container, debugDescription: "Unknown op: \(op)")
-        }
-    }
-
-    func encode(to encoder: Encoder) throws {
-        var container = encoder.container(keyedBy: CodingKeys.self)
-        switch self {
-        case let .descendants(type):
-            try container.encode("descendants", forKey: .op)
-            try container.encode(type, forKey: .type)
-        case let .children(type):
-            try container.encode("children", forKey: .op)
-            try container.encode(type, forKey: .type)
-        case let .matchIdentifier(value):
-            try container.encode("matchIdentifier", forKey: .op)
-            try container.encode(value, forKey: .value)
-        case let .matchTypeIdentifier(type, value):
-            try container.encode("matchTypeIdentifier", forKey: .op)
-            try container.encode(type, forKey: .type)
-            try container.encode(value, forKey: .value)
-        case let .matchPredicate(format, args):
-            try container.encode("matchPredicate", forKey: .op)
-            try container.encode(format, forKey: .format)
-            try container.encode(args, forKey: .args)
-        case let .containPredicate(format, args):
-            try container.encode("containPredicate", forKey: .op)
-            try container.encode(format, forKey: .format)
-            try container.encode(args, forKey: .args)
-        case let .containTypeIdentifier(type, value):
-            try container.encode("containTypeIdentifier", forKey: .op)
-            try container.encode(type, forKey: .type)
-            try container.encode(value, forKey: .value)
-        case let .pickIndex(value):
-            try container.encode("pickIndex", forKey: .op)
-            try container.encode(value, forKey: .value)
-        case .pickOnly:
-            try container.encode("pickOnly", forKey: .op)
-        }
-    }
 }
 
 enum PlanError: LocalizedError {
