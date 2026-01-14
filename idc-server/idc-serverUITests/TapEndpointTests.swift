@@ -133,6 +133,14 @@ final class TapEndpointTests: XCTestCase {
         XCTAssertTrue(error.error.lowercased().contains("unique"))
     }
 
+    func testTapEmptyPlanError() async throws {
+        let plan = ExecutionPlan(pipeline: [])
+        let (data, response) = try await postTapRaw(plan)
+        XCTAssertEqual(response.statusCode, 400)
+        let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
+        XCTAssertTrue(error.error.lowercased().contains("selector") || error.error.lowercased().contains("tap point"))
+    }
+
     func testTapPickIndex() async throws {
         let plan = plan(
             .descendants(type: "any"),

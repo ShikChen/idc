@@ -181,13 +181,11 @@ private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResp
                 guard let app = RunningApp.getForegroundApp() else {
                     throw PlanError.invalidPlan("No foreground app found.")
                 }
-                if tapRequest.plan == nil && tapRequest.at == nil {
+                let hasSelector = tapRequest.plan != nil && tapRequest.plan?.pipeline.isEmpty == false
+                if !hasSelector && tapRequest.at == nil {
                     throw PlanError.invalidPlan("Missing selector or tap point.")
                 }
-                let selected = try executor.resolve(tapRequest.plan, from: app)
-                if tapRequest.at == nil, selected == nil {
-                    throw PlanError.noMatches
-                }
+                let selected = hasSelector ? try executor.resolve(tapRequest.plan, from: app) : nil
                 try performTap(app: app, element: selected, point: tapRequest.at)
                 let tapped = selected.map { TapElement(from: $0) }
                 return TapResponse(selected: tapped)
