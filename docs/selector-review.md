@@ -9,7 +9,7 @@
 - [x] Decide semantics for `plan == nil` vs empty plan in server responses (matched/selected should reflect actual selection). (gpt-new)
 - [x] Ensure query semantics for `query.descendants(...)` are documented and match intended behavior. (claude-new)
 - [x] Ensure `:has()` / `:is()` usage rules are consistent (e.g., can `:has(button)` be type-only?). If allowed, update grammar/implementation. (implied by claude-old ambiguity)
-- (TODO) Confirm `matching(identifier:)` / subscript semantics match Apple docs (identifier matches identifier/title/label/value/placeholder). (gpt-old)
+- [x] Confirm `matching(identifier:)` / subscript semantics match Apple docs (identifier matches identifier/title/label/value/placeholder). (gpt-old)
 
 ## Error Handling / UX
 - (TODO) Improve error messages for string/bool filters (e.g. `[label]` should say missing operator/value, `[label=true]` should say expects string). (gpt-new)
