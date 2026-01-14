@@ -167,10 +167,30 @@ final class TapEndpointTests: XCTestCase {
         let plan = plan(
             .descendants(type: "any"),
             .matchIdentifier("Disabled"),
-            .matchPredicate("enabled == 0")
+            .matchPredicate("isEnabled == 0")
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Disabled")
+    }
+
+    func testTapSelectedIsSelectedKey() async throws {
+        let plan = plan(
+            .descendants(type: "button"),
+            .matchIdentifier("Test"),
+            .matchPredicate("isSelected == 1")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Test")
+    }
+
+    func testTapHasFocusKey() async throws {
+        let plan = plan(
+            .descendants(type: "any"),
+            .matchIdentifier("Tap Me"),
+            .matchPredicate("hasFocus == 0")
+        )
+        let (response, _) = try await postTap(plan)
+        XCTAssertEqual(response.selected?.label, "Tap Me")
     }
 
     func testTapToggleSwitch() async throws {
