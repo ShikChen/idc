@@ -9,7 +9,7 @@ struct SelectorCompiler {
         var pipeline: [ExecutionOp] = []
 
         for step in selector.steps {
-            let axisOp = axisOperation(step: step)
+            let axisOp = try axisOperation(step: step)
             pipeline.append(axisOp)
 
             var filters = step.filters
@@ -20,8 +20,9 @@ struct SelectorCompiler {
                caseFlag == .s
             {
                 pipeline.removeLast()
-                pipeline.append(axisOperation(step: step, overrideType: "any"))
-                pipeline.append(.matchTypeIdentifier(type: typeName, value: value))
+                pipeline.append(try axisOperation(step: step, overrideType: "any"))
+                let normalizedType = try normalizeType(typeName)
+                pipeline.append(.matchTypeIdentifier(type: normalizedType, value: value))
                 filters.removeAll()
             }
 
@@ -68,13 +69,14 @@ struct SelectorCompiler {
         return ExecutionPlan(pipeline: pipeline)
     }
 
-    private func axisOperation(step: SelectorStep, overrideType: String? = nil) -> ExecutionOp {
+    private func axisOperation(step: SelectorStep, overrideType: String? = nil) throws -> ExecutionOp {
         let typeValue = overrideType ?? step.type ?? "any"
+        let normalized = try normalizeType(typeValue)
         switch step.axis {
         case .descendant:
-            return .descendants(type: typeValue)
+            return .descendants(type: normalized)
         case .child:
-            return .children(type: typeValue)
+            return .children(type: normalized)
         }
     }
 
@@ -84,7 +86,8 @@ struct SelectorCompiler {
            case let .shorthand(value, caseFlag) = step.filters[0],
            caseFlag == .s
         {
-            return .containTypeIdentifier(type: typeName, value: value)
+            let normalizedType = try normalizeType(typeName)
+            return .containTypeIdentifier(type: normalizedType, value: value)
         }
         let predicate = try predicateForSimpleStep(step)
         return .containPredicate(format: predicate.format, args: predicate.args)
@@ -103,10 +106,8 @@ struct SelectorCompiler {
     private func predicateForSimpleStep(_ step: SimpleStep) throws -> PredicateFormat {
         var parts: [PredicateFormat] = []
         if let typeName = step.type {
-            guard elementTypeNames.contains(typeName.lowercased()) else {
-                throw SelectorCompileError.invalidType(typeName)
-            }
-            parts.append(PredicateFormat(format: "elementType == %@", args: [.elementType(typeName)]))
+            let normalizedType = try normalizeType(typeName)
+            parts.append(PredicateFormat(format: "elementType == %@", args: [.elementType(normalizedType)]))
         }
 
         for filter in step.filters {
@@ -151,6 +152,14 @@ struct SelectorCompiler {
         let format = fields.map { "(\($0) ==\(modifier) %@)" }.joined(separator: " OR ")
         let args = Array(repeating: PredicateArg.string(value), count: fields.count)
         return PredicateFormat(format: format, args: args)
+    }
+
+    private func normalizeType(_ name: String) throws -> String {
+        let normalized = name.lowercased()
+        guard elementTypeNames.contains(normalized) else {
+            throw SelectorCompileError.invalidType(name)
+        }
+        return normalized
     }
 
     private func and(_ parts: [PredicateFormat]) -> PredicateFormat {

@@ -2,8 +2,8 @@
 
 ## Logic / Correctness
 - [x] Verify bool predicate KVC keys (`enabled`/`selected` vs `isEnabled`/`isSelected`) and standardize mapping to avoid mismatches at runtime. (claude-old, gemini-new, gpt-new)
-- (TODO) Eliminate/mitigate hardcoded `XCUIElement.ElementType` raw-value mapping in CLI, or add runtime validation to prevent mismatches; consider NSPredicate `withSubstitutionVariables` with server-provided `$type_*` substitutions. (claude-new, gpt-old, gpt-new)
-- (TODO) Validate element type names in CLI compile (fail fast instead of server error). (gpt-new)
+- [x] Eliminate/mitigate hardcoded `XCUIElement.ElementType` raw-value mapping in CLI, or add runtime validation to prevent mismatches; consider NSPredicate `withSubstitutionVariables` with server-provided `$type_*` substitutions. (claude-new, gpt-old, gpt-new)
+- [x] Validate element type names in CLI compile (fail fast instead of server error). (gpt-new)
 - (TODO) Clarify / fix whitespace semantics: whether `button [enabled]` is same step or descendant. Align parser & spec. (gpt-old)
 - (TODO) Define behavior for empty/whitespace selector (e.g. error unless `--at`, or treat as root). Avoid implicit “tap app”. (gpt-old)
 - (TODO) Decide semantics for `plan == nil` vs empty plan in server responses (matched/selected should reflect actual selection). (gpt-new)

@@ -235,5 +235,6 @@ final class SelectorDSLTests: XCTestCase {
         XCTAssertThrowsError(try parse("cell:has(button > label)"))
         XCTAssertThrowsError(try parse("button:is(button > label)"))
         XCTAssertThrowsError(try parse(#"["text" x]"#))
+        XCTAssertThrowsError(try compile("notAType"))
     }
 }
