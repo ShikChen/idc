@@ -54,7 +54,7 @@ enum Pick: Equatable { case index(Int), only }
 // MARK: - Execution Plan
 
 struct ExecutionPlan: Equatable, Encodable {
-    var version: Int = 2
+    var version: Int = 3
     var pipeline: [ExecutionOp]
 }
 
@@ -63,11 +63,50 @@ enum ExecutionOp: Equatable {
     case children(type: String)
     case matchIdentifier(String)
     case matchTypeIdentifier(type: String, value: String)
-    case matchPredicate(String)
-    case containPredicate(String)
+    case matchPredicate(format: String, args: [PredicateArg])
+    case containPredicate(format: String, args: [PredicateArg])
     case containTypeIdentifier(type: String, value: String)
     case pickIndex(Int)
     case pickOnly
+}
+
+enum PredicateArg: Equatable {
+    case string(String)
+    case bool(Bool)
+    case number(Double)
+    case elementType(String)
+}
+
+extension PredicateArg: Encodable {
+    enum CodingKeys: String, CodingKey {
+        case kind
+        case value
+    }
+
+    enum Kind: String, Encodable {
+        case string
+        case bool
+        case number
+        case elementType
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.container(keyedBy: CodingKeys.self)
+        switch self {
+        case let .string(value):
+            try container.encode(Kind.string, forKey: .kind)
+            try container.encode(value, forKey: .value)
+        case let .bool(value):
+            try container.encode(Kind.bool, forKey: .kind)
+            try container.encode(value, forKey: .value)
+        case let .number(value):
+            try container.encode(Kind.number, forKey: .kind)
+            try container.encode(value, forKey: .value)
+        case let .elementType(value):
+            try container.encode(Kind.elementType, forKey: .kind)
+            try container.encode(value, forKey: .value)
+        }
+    }
 }
 
 extension ExecutionOp: Encodable {
@@ -75,6 +114,8 @@ extension ExecutionOp: Encodable {
         case op
         case type
         case value
+        case format
+        case args
     }
 
     func encode(to encoder: Encoder) throws {
@@ -93,12 +134,14 @@ extension ExecutionOp: Encodable {
             try container.encode("matchTypeIdentifier", forKey: .op)
             try container.encode(type, forKey: .type)
             try container.encode(value, forKey: .value)
-        case let .matchPredicate(value):
+        case let .matchPredicate(format, args):
             try container.encode("matchPredicate", forKey: .op)
-            try container.encode(value, forKey: .value)
-        case let .containPredicate(value):
+            try container.encode(format, forKey: .format)
+            try container.encode(args, forKey: .args)
+        case let .containPredicate(format, args):
             try container.encode("containPredicate", forKey: .op)
-            try container.encode(value, forKey: .value)
+            try container.encode(format, forKey: .format)
+            try container.encode(args, forKey: .args)
         case let .containTypeIdentifier(type, value):
             try container.encode("containTypeIdentifier", forKey: .op)
             try container.encode(type, forKey: .type)

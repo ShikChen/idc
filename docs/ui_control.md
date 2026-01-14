@@ -235,11 +235,15 @@ The server executes the plan without re-parsing DSL semantics.
 
 ```json
 {
-  "version": 2,
+  "version": 3,
   "pipeline": [
     { "op": "descendants", "type": "any" },
     { "op": "matchIdentifier", "value": "Settings" },
-    { "op": "matchPredicate", "value": "label == 'OK'" },
+    {
+      "op": "matchPredicate",
+      "format": "label == %@",
+      "args": [{ "kind": "string", "value": "OK" }]
+    },
     { "op": "children", "type": "button" },
     { "op": "pickIndex", "value": -1 }
   ]
@@ -259,10 +263,13 @@ The server executes the plan without re-parsing DSL semantics.
   - `matching(type, identifier:)`
 
 - `matchPredicate`
-  - `matching(NSPredicate)`
+  - `matching(NSPredicate(format:argumentArray:))`
+  - `format` uses `%@` placeholders, `args` is ordered to match them
+  - `args.kind: elementType` is resolved on the server to the enum raw value
+  - `:predicate("...")` compiles to `format` with empty `args`
 
 - `containPredicate`
-  - `containing(NSPredicate)`
+  - `containing(NSPredicate(format:argumentArray:))`
 
 - `containTypeIdentifier`
   - `containing(type, identifier:)`

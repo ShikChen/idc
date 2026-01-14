@@ -50,7 +50,7 @@ final class TapEndpointTests: XCTestCase {
             .descendants(type: "any"),
             .matchIdentifier("root"),
             .descendants(type: "button"),
-            .matchPredicate("label == \"Primary\"")
+            .matchPredicate(format: "label == %@", args: [arg("Primary")])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Primary")
@@ -81,7 +81,10 @@ final class TapEndpointTests: XCTestCase {
         let plan = plan(
             .descendants(type: "any"),
             .matchIdentifier("root"),
-            .containPredicate("(elementType == 9) AND (label == \"Secondary\")")
+            .containPredicate(
+                format: "(elementType == %@) AND (label == %@)",
+                args: [typeArg("button"), arg("Secondary")]
+            )
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.identifier, "root")
@@ -99,7 +102,10 @@ final class TapEndpointTests: XCTestCase {
     func testTapPredicateOr() async throws {
         let plan = plan(
             .descendants(type: "button"),
-            .matchPredicate("(label == \"Primary\") OR (label == \"Secondary\")")
+            .matchPredicate(
+                format: "(label == %@) OR (label == %@)",
+                args: [arg("Primary"), arg("Secondary")]
+            )
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Primary")
@@ -110,7 +116,7 @@ final class TapEndpointTests: XCTestCase {
             .descendants(type: "any"),
             .matchIdentifier("root"),
             .descendants(type: "button"),
-            .matchPredicate("NOT (label == \"Secondary\")")
+            .matchPredicate(format: "NOT (label == %@)", args: [arg("Secondary")])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertNotEqual(response.selected?.label, "Secondary")
@@ -148,7 +154,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapPlaceholderValue() async throws {
         let plan = plan(
             .descendants(type: "any"),
-            .matchPredicate("placeholderValue == \"Email\"")
+            .matchPredicate(format: "placeholderValue == %@", args: [arg("Email")])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.placeholderValue, "Email")
@@ -157,7 +163,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapValue() async throws {
         let plan = plan(
             .descendants(type: "any"),
-            .matchPredicate("value == \"hello\"")
+            .matchPredicate(format: "value == %@", args: [arg("hello")])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.value, "hello")
@@ -167,7 +173,7 @@ final class TapEndpointTests: XCTestCase {
         let plan = plan(
             .descendants(type: "any"),
             .matchIdentifier("Disabled"),
-            .matchPredicate("isEnabled == 0")
+            .matchPredicate(format: "isEnabled == %@", args: [arg(false)])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Disabled")
@@ -177,7 +183,7 @@ final class TapEndpointTests: XCTestCase {
         let plan = plan(
             .descendants(type: "button"),
             .matchIdentifier("Test"),
-            .matchPredicate("isSelected == 1")
+            .matchPredicate(format: "isSelected == %@", args: [arg(true)])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Test")
@@ -187,7 +193,7 @@ final class TapEndpointTests: XCTestCase {
         let plan = plan(
             .descendants(type: "any"),
             .matchIdentifier("Tap Me"),
-            .matchPredicate("hasFocus == 0")
+            .matchPredicate(format: "hasFocus == %@", args: [arg(false)])
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Tap Me")
@@ -214,6 +220,22 @@ final class TapEndpointTests: XCTestCase {
 
     private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
         ExecutionPlan(pipeline: ops)
+    }
+
+    private func arg(_ value: String) -> PredicateArg {
+        .string(value)
+    }
+
+    private func arg(_ value: Bool) -> PredicateArg {
+        .bool(value)
+    }
+
+    private func arg(_ value: Double) -> PredicateArg {
+        .number(value)
+    }
+
+    private func typeArg(_ value: String) -> PredicateArg {
+        .elementType(value)
     }
 
     private func postTap(_ plan: ExecutionPlan) async throws -> (TapResponse, HTTPURLResponse) {
