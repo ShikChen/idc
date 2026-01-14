@@ -37,6 +37,7 @@ escape := "\\" ("\"" | "\\" | "n" | "t" | "r")
 ```
 
 - Space (` `) means **descendants**.
+- Whitespace is always a combinator; do **not** insert spaces between a `type` and its filters/pickers unless you intend to start a new step.
 - `>` means **children**.
 - `type` is **case-insensitive**.
 - `type` is optional. If omitted, it implies no type constraint.
@@ -134,6 +135,7 @@ Semantics:
 ```
 
 `[n]` / `:only` converts a query into a single element for subsequent steps.
+Pickers must be attached to a step (no whitespace); a standalone picker step is invalid.
 
 ### 7) Root
 

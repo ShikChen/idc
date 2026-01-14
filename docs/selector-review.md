@@ -4,7 +4,7 @@
 - [x] Verify bool predicate KVC keys (`enabled`/`selected` vs `isEnabled`/`isSelected`) and standardize mapping to avoid mismatches at runtime. (claude-old, gemini-new, gpt-new)
 - [x] Eliminate/mitigate hardcoded `XCUIElement.ElementType` raw-value mapping in CLI, or add runtime validation to prevent mismatches; consider NSPredicate `withSubstitutionVariables` with server-provided `$type_*` substitutions. (claude-new, gpt-old, gpt-new)
 - [x] Validate element type names in CLI compile (fail fast instead of server error). (gpt-new)
-- (TODO) Clarify / fix whitespace semantics: whether `button [enabled]` is same step or descendant. Align parser & spec. (gpt-old)
+- [x] Clarify / fix whitespace semantics: whether `button [enabled]` is same step or descendant. Align parser & spec. (gpt-old)
 - (TODO) Define behavior for empty/whitespace selector (e.g. error unless `--at`, or treat as root). Avoid implicit “tap app”. (gpt-old)
 - (TODO) Decide semantics for `plan == nil` vs empty plan in server responses (matched/selected should reflect actual selection). (gpt-new)
 - (TODO) Ensure query semantics for `query.descendants(...)` are documented and match intended behavior. (claude-new)
@@ -50,7 +50,7 @@
 
 ## Tests to Add / Expand
 - (TODO) Add tests for negative index (`[-1]`, `[2]`), nested `:is` / `:not`, multiple `:has`, Unicode strings, empty string `""`, and shorthand inside `:has`. (claude-old, claude-new)
-- (TODO) Add tests for whitespace semantics (e.g. `button [enabled]`, `cell :only button`, `cell :has(button)`). (gpt-old)
+- [x] Add tests for whitespace semantics (e.g. `button [enabled]`, `cell :only button`, `cell :has(button)`). (gpt-old)
 - (TODO) Add tests for invalid predicates to ensure server doesn’t crash and returns 400. (gpt-old)
 - (TODO) Add tests for tap point validation (NaN/Inf/out-of-range). (gpt-old)
 - (TODO) Add tests for plan version mismatch. (gpt-old)

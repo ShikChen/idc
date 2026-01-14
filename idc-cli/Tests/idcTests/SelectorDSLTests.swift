@@ -218,6 +218,24 @@ final class SelectorDSLTests: XCTestCase {
         ))
     }
 
+    func testWhitespaceAsCombinator() throws {
+        let program = try compile("button [enabled]")
+        XCTAssertEqual(program, plan(
+            .descendants(type: "button"),
+            .descendants(type: "any"),
+            .matchPredicate(format: "(isEnabled == %@)", args: [arg(true)])
+        ))
+
+        XCTAssertThrowsError(try compile("cell :only button"))
+
+        let hasWithSpace = try compile("cell :has(button)")
+        XCTAssertEqual(hasWithSpace, plan(
+            .descendants(type: "cell"),
+            .descendants(type: "any"),
+            .containPredicate(format: "(elementType == %@)", args: [typeArg("button")])
+        ))
+    }
+
     func testStringEscapes() throws {
         let program = try compile(#"[label="A\"B"]"#)
         XCTAssertEqual(program, plan(
