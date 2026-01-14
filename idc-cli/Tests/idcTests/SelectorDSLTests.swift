@@ -12,6 +12,18 @@ final class SelectorDSLTests: XCTestCase {
         return try SelectorCompiler().compile(selector)
     }
 
+    private func parseError(_ input: String) -> String {
+        do {
+            _ = try parse(input)
+            XCTFail("Expected parse error.")
+            return ""
+        } catch let error as SelectorParseError {
+            return error.description
+        } catch {
+            return String(describing: error)
+        }
+    }
+
     private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
         ExecutionPlan(pipeline: ops)
     }
@@ -218,6 +230,20 @@ final class SelectorDSLTests: XCTestCase {
         ))
     }
 
+    func testPickOnlyStep() throws {
+        let only = try compile(":only")
+        XCTAssertEqual(only, plan(
+            .descendants(type: "any"),
+            .pickOnly
+        ))
+
+        let indexed = try compile("[1]")
+        XCTAssertEqual(indexed, plan(
+            .descendants(type: "any"),
+            .pickIndex(1)
+        ))
+    }
+
     func testWhitespaceAsCombinator() throws {
         let program = try compile("button [enabled]")
         XCTAssertEqual(program, plan(
@@ -226,7 +252,13 @@ final class SelectorDSLTests: XCTestCase {
             .matchPredicate(format: "(isEnabled == %@)", args: [arg(true)])
         ))
 
-        XCTAssertThrowsError(try compile("cell :only button"))
+        let onlyStep = try compile("cell :only button")
+        XCTAssertEqual(onlyStep, plan(
+            .descendants(type: "cell"),
+            .descendants(type: "any"),
+            .pickOnly,
+            .descendants(type: "button")
+        ))
 
         let hasWithSpace = try compile("cell :has(button)")
         XCTAssertEqual(hasWithSpace, plan(
@@ -247,12 +279,29 @@ final class SelectorDSLTests: XCTestCase {
     func testErrors() {
         XCTAssertThrowsError(try parse("> button"))
         XCTAssertThrowsError(try parse("button >"))
-        XCTAssertThrowsError(try parse("[0]"))
-        XCTAssertThrowsError(try parse(":only"))
         XCTAssertThrowsError(try parse("cell:only[0]"))
         XCTAssertThrowsError(try parse("cell:has(button > label)"))
         XCTAssertThrowsError(try parse("button:is(button > label)"))
         XCTAssertThrowsError(try parse(#"["text" x]"#))
+        XCTAssertThrowsError(try parse("button[label]"))
         XCTAssertThrowsError(try compile("notAType"))
+    }
+
+    func testErrorMessages() {
+        let missingOp = parseError("tabBar button[label]")
+        XCTAssertTrue(missingOp.contains("string match operator"))
+        XCTAssertTrue(missingOp.contains("input:1:20"))
+
+        let badBool = parseError(#"button[enabled="yes"]"#)
+        XCTAssertTrue(badBool.contains("Expected boolean"))
+        XCTAssertTrue(badBool.contains("input:1:16"))
+
+        let missingString = parseError("button[label=]")
+        XCTAssertTrue(missingString.contains("Expected string literal"))
+        XCTAssertTrue(missingString.contains("input:1:14"))
+
+        let invalidAttr = parseError(#"button[foo="x"]"#)
+        XCTAssertTrue(invalidAttr.contains("Invalid identifier"))
+        XCTAssertTrue(invalidAttr.contains("input:1:8-10"))
     }
 }
