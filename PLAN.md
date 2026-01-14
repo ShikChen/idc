@@ -25,6 +25,7 @@
 
 - [x] `GET /screenshot` 截圖端點
 - [ ] `GET /describe-ui` UI 元素樹端點
+- [ ] `GET /describe-ui` 支援 ref 產出（snapshotId + ref map）
 - [ ] `POST /tap` 點擊端點
 - [ ] `POST /swipe` 滑動端點
 - [ ] `POST /input` 輸入文字端點
@@ -48,6 +49,7 @@
 - [ ] `idc ui swipe`
 - [ ] `idc ui input`
 - [ ] `idc describe-ui`
+- [ ] `idc describe-ui` 顯示/輸出 ref，`idc tap @ref` 支援
 - [ ] 服務發現（Bonjour/mDNS 或 localhost:port）
 - [ ] Simulator 和 Real Device 統一介面
 - [ ] 自動選擇設備（只有一台時不需 `--udid`）
