@@ -141,6 +141,8 @@ Pickers must be attached to a step (no whitespace); a standalone picker step is 
 
 An empty selector targets the **foreground app**.
 
+`idc tap` treats an empty/whitespace selector as **no selector**; it is only valid when `--at` is provided (screen point).
+
 ### 8) Examples
 
 ```

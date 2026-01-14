@@ -5,7 +5,7 @@
 - [x] Eliminate/mitigate hardcoded `XCUIElement.ElementType` raw-value mapping in CLI, or add runtime validation to prevent mismatches; consider NSPredicate `withSubstitutionVariables` with server-provided `$type_*` substitutions. (claude-new, gpt-old, gpt-new)
 - [x] Validate element type names in CLI compile (fail fast instead of server error). (gpt-new)
 - [x] Clarify / fix whitespace semantics: whether `button [enabled]` is same step or descendant. Align parser & spec. (gpt-old)
-- (TODO) Define behavior for empty/whitespace selector (e.g. error unless `--at`, or treat as root). Avoid implicit “tap app”. (gpt-old)
+- [x] Define behavior for empty/whitespace selector (e.g. error unless `--at`, or treat as root). Avoid implicit “tap app”. (gpt-old)
 - (TODO) Decide semantics for `plan == nil` vs empty plan in server responses (matched/selected should reflect actual selection). (gpt-new)
 - (TODO) Ensure query semantics for `query.descendants(...)` are documented and match intended behavior. (claude-new)
 - (TODO) Ensure `:has()` / `:is()` usage rules are consistent (e.g., can `:has(button)` be type-only?). If allowed, update grammar/implementation. (implied by claude-old ambiguity)

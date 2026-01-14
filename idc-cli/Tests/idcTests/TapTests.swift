@@ -30,4 +30,22 @@ final class TapTests: XCTestCase {
         XCTAssertThrowsError(try parseTapPoint("10"))
         XCTAssertThrowsError(try parseTapPoint("10,abc"))
     }
+
+    func testEmptySelectorRequiresPoint() async throws {
+        await XCTAssertThrowsErrorAsync {
+            var tap = Tap()
+            tap.selector = "   "
+            tap.at = nil
+            try await tap.run()
+        }
+    }
+}
+
+private func XCTAssertThrowsErrorAsync(_ expression: @escaping @Sendable () async throws -> Void) async {
+    do {
+        try await expression()
+        XCTFail("Expected error to be thrown.")
+    } catch {
+        return
+    }
 }

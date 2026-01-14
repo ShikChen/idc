@@ -25,14 +25,22 @@ struct Tap: AsyncParsableCommand {
 
         let plan: ExecutionPlan?
         if let selector {
-            var parser = SelectorParser(selector)
-            do {
-                let parsed = try parser.parseSelector()
-                plan = try SelectorCompiler().compile(parsed)
-            } catch let error as SelectorParseError {
-                throw ValidationError(error.description)
-            } catch let error as SelectorCompileError {
-                throw ValidationError(error.description)
+            let trimmed = selector.trimmingCharacters(in: .whitespacesAndNewlines)
+            if trimmed.isEmpty {
+                if at == nil {
+                    throw ValidationError("Empty selector requires --at.")
+                }
+                plan = nil
+            } else {
+                var parser = SelectorParser(selector)
+                do {
+                    let parsed = try parser.parseSelector()
+                    plan = try SelectorCompiler().compile(parsed)
+                } catch let error as SelectorParseError {
+                    throw ValidationError(error.description)
+                } catch let error as SelectorCompileError {
+                    throw ValidationError(error.description)
+                }
             }
         } else {
             plan = nil
