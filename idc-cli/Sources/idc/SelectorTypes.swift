@@ -18,7 +18,13 @@ struct SimpleStep: Equatable {
 
 enum Axis: String, Equatable { case descendant, child }
 enum CaseFlag: String, Equatable { case s, i }
-enum StringMatch: String, Equatable { case eq, contains, begins, ends, regex }
+enum StringMatch: String, Equatable {
+    case eq = "=="
+    case contains = "CONTAINS"
+    case begins = "BEGINSWITH"
+    case ends = "ENDSWITH"
+    case regex = "MATCHES"
+}
 enum StringField: String, Equatable { case identifier, title, label, value, placeholderValue }
 enum BoolField: String, Equatable { case isEnabled, isSelected, hasFocus }
 enum PointUnit: String, Equatable, Encodable { case pt, pct }

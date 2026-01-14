@@ -139,24 +139,8 @@ struct SelectorCompiler {
 
     private func predicateForString(field: StringField, match: StringMatch, value: String, caseFlag: CaseFlag) -> String {
         let modifier = caseFlag == .i ? "[c]" : ""
-        let literal: String
-        if match == .regex, caseFlag == .i {
-            literal = predicateStringLiteral("(?i)" + value)
-        } else {
-            literal = predicateStringLiteral(value)
-        }
-        switch match {
-        case .eq:
-            return "\(field.rawValue) ==\(modifier) \(literal)"
-        case .contains:
-            return "\(field.rawValue) CONTAINS\(modifier) \(literal)"
-        case .begins:
-            return "\(field.rawValue) BEGINSWITH\(modifier) \(literal)"
-        case .ends:
-            return "\(field.rawValue) ENDSWITH\(modifier) \(literal)"
-        case .regex:
-            return "\(field.rawValue) MATCHES \(literal)"
-        }
+        let literal = predicateStringLiteral(value)
+        return "\(field.rawValue) \(match.rawValue)\(modifier) \(literal)"
     }
 
     private func predicateForBool(field: BoolField, value: Bool) -> String {

@@ -70,7 +70,7 @@ final class SelectorDSLTests: XCTestCase {
 
     func testAttrOperators() throws {
         let program = try compile(#"[label="OK"][label*="Add"][label^="Beg"][label$="End"][label~="^re.*" i]"#)
-        let predicate = "(label == \"OK\") AND (label CONTAINS \"Add\") AND (label BEGINSWITH \"Beg\") AND (label ENDSWITH \"End\") AND (label MATCHES \"(?i)^re.*\")"
+        let predicate = "(label == \"OK\") AND (label CONTAINS \"Add\") AND (label BEGINSWITH \"Beg\") AND (label ENDSWITH \"End\") AND (label MATCHES[c] \"^re.*\")"
         XCTAssertEqual(program, plan(
             .descendants(type: "any"),
             .matchPredicate(predicate)
