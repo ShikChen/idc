@@ -81,25 +81,17 @@ enum PredicateArg: Equatable, Codable {
 
 enum SelectorParseError: Error, CustomStringConvertible {
     case parsing(String)
-    case unexpectedEnd(expected: String)
-    case unexpectedCharacter(Character, expected: String)
     case expected(String)
     case invalidNumber(String)
     case invalidEscape(String)
     case invalidPredicate(String)
-    case emptySelector
     case invalidIdentifier(String)
-    case invalidBoolean(String)
     case unexpectedToken(String)
 
     var description: String {
         switch self {
         case let .parsing(message):
             return message
-        case let .unexpectedEnd(expected):
-            return "Unexpected end of input. Expected \(expected)."
-        case let .unexpectedCharacter(char, expected):
-            return "Unexpected character '\(char)'. Expected \(expected)."
         case let .expected(expected):
             return "Expected \(expected)."
         case let .invalidNumber(value):
@@ -108,12 +100,8 @@ enum SelectorParseError: Error, CustomStringConvertible {
             return "Invalid escape sequence: \\ \(value)."
         case let .invalidPredicate(value):
             return "Invalid predicate: \(value)."
-        case .emptySelector:
-            return "Selector is empty."
         case let .invalidIdentifier(value):
             return "Invalid identifier: \(value)."
-        case let .invalidBoolean(value):
-            return "Invalid boolean: \(value)."
         case let .unexpectedToken(value):
             return "Unexpected token: \(value)."
         }
