@@ -1,11 +1,9 @@
-import XCTest
 @testable import idc
+import XCTest
 
 final class SnapshotTreeTests: XCTestCase {
     func testSimplifyDropsEmptyLeaf() {
-        let root = node(type: "application", children: [
-            node(type: "other")
-        ])
+        let root = tree("application", tree("other"))
 
         let simplified = simplifySnapshotTree(root)
 
@@ -13,10 +11,8 @@ final class SnapshotTreeTests: XCTestCase {
     }
 
     func testSimplifyFlattensOtherChildIntoParent() {
-        let button = node(type: "button", label: "Tap Me")
-        let other = node(type: "other", children: [button])
-        let window = node(type: "window", children: [other])
-        let root = node(type: "application", children: [window])
+        let button = tree("button", label: "Tap Me")
+        let root = tree("application", tree("window", tree("other", button)))
 
         let simplified = simplifySnapshotTree(root)
 
@@ -24,18 +20,71 @@ final class SnapshotTreeTests: XCTestCase {
     }
 
     func testSimplifyCollapsesSingleChildSameShape() {
-        let leaf = node(type: "staticText", label: "Title")
-        let inner = node(type: "window", children: [leaf])
-        let outer = node(type: "window", children: [inner])
-        let root = node(type: "application", children: [outer])
+        let inner = tree("window", tree("staticText", label: "Title"))
+        let root = tree("application", tree("window", inner))
 
         let simplified = simplifySnapshotTree(root)
 
         XCTAssertEqual(simplified?.children.first, inner)
     }
 
-    private func node(
-        type: String,
+    func testSimplifyInterleavesRulesMultipleTimes() {
+        let root = tree(
+            "application",
+            tree(
+                "window",
+                tree(
+                    "window",
+                    tree(
+                        "other",
+                        tree(
+                            "window",
+                            tree(
+                                "window",
+                                tree(
+                                    "other",
+                                    tree("image"),
+                                    tree(
+                                        "window",
+                                        tree(
+                                            "window",
+                                            tree(
+                                                "other",
+                                                tree("image"),
+                                                tree("button", label: "Save")
+                                            )
+                                        )
+                                    ),
+                                    tree("image")
+                                )
+                            )
+                        )
+                    )
+                )
+            )
+        )
+
+        let expected = tree(
+            "application",
+            tree(
+                "window",
+                tree(
+                    "window",
+                    tree(
+                        "window",
+                        tree("button", label: "Save")
+                    )
+                )
+            )
+        )
+
+        let simplified = simplifySnapshotTree(root)
+
+        XCTAssertEqual(simplified, expected)
+    }
+
+    private func tree(
+        _ type: String,
         identifier: String = "",
         label: String = "",
         title: String = "",
@@ -45,7 +94,7 @@ final class SnapshotTreeTests: XCTestCase {
         isEnabled: Bool = true,
         isSelected: Bool = false,
         frame: Frame = Frame(x: 0, y: 0, width: 10, height: 10),
-        children: [SnapshotNode] = []
+        _ children: SnapshotNode...
     ) -> SnapshotNode {
         SnapshotNode(
             identifier: identifier,

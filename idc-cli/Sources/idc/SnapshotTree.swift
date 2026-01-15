@@ -89,20 +89,21 @@ func simplifySnapshotTree(_ node: SnapshotNode, isRoot: Bool = true) -> Snapshot
 func snapshotLine(for node: SnapshotNode) -> String {
     let head = String(format: "%@@(%.0f,%.0f,%.0f,%.0f)", node.elementType, node.frame.x, node.frame.y, node.frame.width, node.frame.height)
     var parts: [String] = [head]
-    if !node.label.isEmpty {
-        parts.append("label=\"\(escapeSnapshotValue(node.label))\"")
+    func addString(_ key: String, _ value: String, skipIfEmpty: Bool) {
+        if skipIfEmpty, value.isEmpty {
+            return
+        }
+        parts.append("\(key)=\"\(escapeSnapshotValue(value))\"")
     }
-    if !node.title.isEmpty {
-        parts.append("title=\"\(escapeSnapshotValue(node.title))\"")
-    }
-    if !node.identifier.isEmpty {
-        parts.append("identifier=\"\(escapeSnapshotValue(node.identifier))\"")
-    }
+
+    addString("label", node.label, skipIfEmpty: true)
+    addString("title", node.title, skipIfEmpty: true)
+    addString("identifier", node.identifier, skipIfEmpty: true)
     if let value = node.value {
         parts.append("value=\(formatSnapshotValue(value))")
     }
     if let placeholder = node.placeholderValue {
-        parts.append("placeholder=\"\(escapeSnapshotValue(placeholder))\"")
+        addString("placeholder", placeholder, skipIfEmpty: false)
     }
     if node.hasFocus {
         parts.append("hasFocus=true")
@@ -121,31 +122,6 @@ func renderSnapshotTree(_ node: SnapshotNode, depth: Int) {
     print(indent + snapshotLine(for: node))
     for child in node.children {
         renderSnapshotTree(child, depth: depth + 1)
-    }
-}
-
-private func escapeSnapshotValue(_ value: String) -> String {
-    var escaped = value.replacingOccurrences(of: "\\", with: "\\\\")
-    escaped = escaped.replacingOccurrences(of: "\"", with: "\\\"")
-    escaped = escaped.replacingOccurrences(of: "\n", with: "\\n")
-    escaped = escaped.replacingOccurrences(of: "\r", with: "\\r")
-    escaped = escaped.replacingOccurrences(of: "\t", with: "\\t")
-    return escaped
-}
-
-private func formatSnapshotValue(_ value: JSONValue) -> String {
-    switch value {
-    case let .string(s):
-        return "\"\(escapeSnapshotValue(s))\""
-    case let .number(n):
-        if n == n.rounded() && abs(n) < Double(Int.max) {
-            return String(Int(n))
-        }
-        return String(n)
-    case let .bool(b):
-        return b ? "true" : "false"
-    case .null:
-        return "null"
     }
 }
 
@@ -169,22 +145,14 @@ private func flattenedChildren(for node: SnapshotNode, isRoot: Bool) -> [Snapsho
     guard !isRoot else {
         return node.children
     }
-    var flattened: [SnapshotNode] = node.children
-    var didChange = true
-    while didChange {
-        didChange = false
-        var next: [SnapshotNode] = []
-        for child in flattened {
-            if shouldFlattenNode(child) {
-                next.append(contentsOf: child.children)
-                didChange = true
-            } else {
-                next.append(child)
-            }
-        }
-        flattened = next
+    return node.children.flatMap(flattenNode)
+}
+
+private func flattenNode(_ node: SnapshotNode) -> [SnapshotNode] {
+    if shouldFlattenNode(node) {
+        return node.children.flatMap(flattenNode)
     }
-    return flattened
+    return [node]
 }
 
 private func shouldFlattenNode(_ node: SnapshotNode) -> Bool {
@@ -218,4 +186,29 @@ private func isSameFrame(_ lhs: Frame, _ rhs: Frame) -> Bool {
         lhs.y == rhs.y &&
         lhs.width == rhs.width &&
         lhs.height == rhs.height
+}
+
+private func escapeSnapshotValue(_ value: String) -> String {
+    var escaped = value.replacingOccurrences(of: "\\", with: "\\\\")
+    escaped = escaped.replacingOccurrences(of: "\"", with: "\\\"")
+    escaped = escaped.replacingOccurrences(of: "\n", with: "\\n")
+    escaped = escaped.replacingOccurrences(of: "\r", with: "\\r")
+    escaped = escaped.replacingOccurrences(of: "\t", with: "\\t")
+    return escaped
+}
+
+private func formatSnapshotValue(_ value: JSONValue) -> String {
+    switch value {
+    case let .string(s):
+        return "\"\(escapeSnapshotValue(s))\""
+    case let .number(n):
+        if n == n.rounded() && abs(n) < Double(Int.max) {
+            return String(Int(n))
+        }
+        return String(n)
+    case let .bool(b):
+        return b ? "true" : "false"
+    case .null:
+        return "null"
+    }
 }
