@@ -109,20 +109,20 @@ actor TestServer {
                 body: data
             )
         }
-        await server.appendRoute("/describe-ui", for: [.GET]) { _ in
+        await server.appendRoute("/snapshot", for: [.GET]) { _ in
             do {
                 let root = try await MainActor.run {
                     guard let app = RunningApp.getForegroundApp() else {
                         throw NSError(
-                            domain: "idc.describe-ui",
+                            domain: "idc.snapshot",
                             code: 409,
                             userInfo: [NSLocalizedDescriptionKey: "No foreground app found."]
                         )
                     }
                     let snapshot = try app.snapshot()
-                    return buildDescribeNode(snapshot)
+                    return buildSnapshotNode(snapshot)
                 }
-                let body = try JSONEncoder().encode(DescribeUIResponse(root: root))
+                let body = try JSONEncoder().encode(SnapshotResponse(root: root))
                 return HTTPResponse(
                     statusCode: .ok,
                     headers: [.contentType: "application/json"],

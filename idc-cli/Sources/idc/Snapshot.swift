@@ -1,9 +1,9 @@
 import ArgumentParser
 import Foundation
 
-struct DescribeUI: AsyncParsableCommand {
+struct Snapshot: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Describe current UI hierarchy from idc-server"
+        abstract: "Snapshot current UI hierarchy from idc-server"
     )
 
     @Flag(name: .long, help: "Output raw JSON.")
@@ -18,7 +18,7 @@ struct DescribeUI: AsyncParsableCommand {
     mutating func run() async throws {
         let data: Data
         do {
-            data = try await fetchData(path: "/describe-ui", timeout: timeout)
+            data = try await fetchData(path: "/snapshot", timeout: timeout)
         } catch {
             throw serverUnreachableError(error)
         }
@@ -33,16 +33,16 @@ struct DescribeUI: AsyncParsableCommand {
             return
         }
 
-        let payload = try JSONDecoder().decode(DescribeUIResponse.self, from: data)
-        renderDescribeTree(payload.root, depth: 0)
+        let payload = try JSONDecoder().decode(SnapshotResponse.self, from: data)
+        renderSnapshotTree(payload.root, depth: 0)
     }
 }
 
-private struct DescribeUIResponse: Decodable {
-    let root: DescribeUINode
+private struct SnapshotResponse: Decodable {
+    let root: SnapshotNode
 }
 
-private struct DescribeUINode: Decodable {
+private struct SnapshotNode: Decodable {
     let identifier: String
     let elementType: String
     let value: JSONValue?
@@ -53,7 +53,7 @@ private struct DescribeUINode: Decodable {
     let isEnabled: Bool
     let isSelected: Bool
     let frame: Frame
-    let children: [DescribeUINode]
+    let children: [SnapshotNode]
 }
 
 private struct Frame: Decodable {
@@ -91,9 +91,9 @@ private enum JSONValue: Decodable {
     }
 }
 
-private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool = true) {
+private func renderSnapshotTree(_ node: SnapshotNode, depth: Int, isRoot: Bool = true) {
     if !isRoot, let child = simplifiableChild(for: node) {
-        renderDescribeTree(child, depth: depth, isRoot: false)
+        renderSnapshotTree(child, depth: depth, isRoot: false)
         return
     }
 
@@ -105,13 +105,13 @@ private func renderDescribeTree(_ node: DescribeUINode, depth: Int, isRoot: Bool
     }
 
     let indent = String(repeating: "  ", count: depth)
-    print(indent + describeLine(for: node))
+    print(indent + snapshotLine(for: node))
     for child in childrenToRender {
-        renderDescribeTree(child, depth: depth + 1, isRoot: false)
+        renderSnapshotTree(child, depth: depth + 1, isRoot: false)
     }
 }
 
-private func describeLine(for node: DescribeUINode) -> String {
+private func snapshotLine(for node: SnapshotNode) -> String {
     let head = String(format: "%@@(%.0f,%.0f,%.0f,%.0f)", node.elementType, node.frame.x, node.frame.y, node.frame.width, node.frame.height)
     var parts: [String] = [head]
     if !node.label.isEmpty {
@@ -166,7 +166,7 @@ private func formatJSONValue(_ value: JSONValue) -> String {
     }
 }
 
-private func simplifiableChild(for node: DescribeUINode) -> DescribeUINode? {
+private func simplifiableChild(for node: SnapshotNode) -> SnapshotNode? {
     guard node.children.count == 1, let child = node.children.first else {
         return nil
     }
@@ -182,15 +182,15 @@ private func simplifiableChild(for node: DescribeUINode) -> DescribeUINode? {
     return child
 }
 
-private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [DescribeUINode] {
+private func flattenedChildren(for node: SnapshotNode, isRoot: Bool) -> [SnapshotNode] {
     guard !isRoot else {
         return node.children
     }
-    var flattened: [DescribeUINode] = node.children
+    var flattened: [SnapshotNode] = node.children
     var didChange = true
     while didChange {
         didChange = false
-        var next: [DescribeUINode] = []
+        var next: [SnapshotNode] = []
         for child in flattened {
             if shouldFlattenNode(child) {
                 next.append(contentsOf: child.children)
@@ -204,7 +204,7 @@ private func flattenedChildren(for node: DescribeUINode, isRoot: Bool) -> [Descr
     return flattened
 }
 
-private func shouldFlattenNode(_ node: DescribeUINode) -> Bool {
+private func shouldFlattenNode(_ node: SnapshotNode) -> Bool {
     guard node.elementType == "other" else { return false }
     guard !hasValueLike(node) else { return false }
     guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
@@ -213,12 +213,12 @@ private func shouldFlattenNode(_ node: DescribeUINode) -> Bool {
     return true
 }
 
-private func shouldSkipLeaf(_ node: DescribeUINode) -> Bool {
+private func shouldSkipLeaf(_ node: SnapshotNode) -> Bool {
     guard node.children.isEmpty else { return false }
     return !hasValueLike(node)
 }
 
-private func hasValueLike(_ node: DescribeUINode) -> Bool {
+private func hasValueLike(_ node: SnapshotNode) -> Bool {
     if !node.label.isEmpty { return true }
     if !node.title.isEmpty { return true }
     if !node.identifier.isEmpty { return true }
@@ -227,7 +227,7 @@ private func hasValueLike(_ node: DescribeUINode) -> Bool {
     return false
 }
 
-private func isSameShape(_ lhs: DescribeUINode, _ rhs: DescribeUINode) -> Bool {
+private func isSameShape(_ lhs: SnapshotNode, _ rhs: SnapshotNode) -> Bool {
     return lhs.elementType == rhs.elementType &&
         lhs.hasFocus == rhs.hasFocus &&
         lhs.isEnabled == rhs.isEnabled &&

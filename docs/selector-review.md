@@ -28,8 +28,8 @@
 - [x] Avoid `query.count` unless needed; use `firstMatch.exists` first and document negative-index cost. (claude-new, gpt-old, gpt-new)
 - [x] Avoid `allElementsBoundByIndex` for smart tap if possible; prefer firstMatch or bounded search. (gemini-new, gpt-old, gpt-new)
 - [x] Avoid screenshot for screen taps when not necessary; use `app.frame` or only when `%` is used. (gpt-old, gpt-new)
-- (TODO) Optimize predicate string building to reduce intermediate allocations. (claude-new)
-- (TODO) Address potential O(n^2) in `DescribeUI` flattening if still present. (gpt-new)
+- [x] Optimize predicate string building to reduce intermediate allocations. (claude-new)
+- (TODO) Address potential O(n^2) in `snapshot` flattening if still present. (gpt-new)
 
 ## Tap Point / Coordinate Semantics
 - (TODO) Validate tap point inputs: NaN/Inf, percent bounds, and optional clamping rules. (gemini-new, gpt-old, gpt-new)

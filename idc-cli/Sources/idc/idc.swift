@@ -5,7 +5,7 @@ struct Idc: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "idc",
         abstract: "iOS Device Control CLI",
-        subcommands: [Server.self, Screenshot.self, DescribeUI.self, Tap.self]
+        subcommands: [Server.self, Screenshot.self, Snapshot.self, Tap.self]
     )
 }
 

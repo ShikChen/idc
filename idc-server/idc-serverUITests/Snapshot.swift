@@ -2,11 +2,11 @@ import CoreGraphics
 import Foundation
 import XCTest
 
-struct DescribeUIResponse: Codable {
-    let root: DescribeUINode
+struct SnapshotResponse: Codable {
+    let root: SnapshotNode
 }
 
-struct DescribeUINode: Codable {
+struct SnapshotNode: Codable {
     let identifier: String
     let elementType: String
     let value: JSONValue?
@@ -17,7 +17,7 @@ struct DescribeUINode: Codable {
     let isEnabled: Bool
     let isSelected: Bool
     let frame: Frame
-    let children: [DescribeUINode]
+    let children: [SnapshotNode]
 }
 
 struct Frame: Codable {
@@ -106,9 +106,9 @@ enum JSONValue: Codable {
 }
 
 @MainActor
-func buildDescribeNode(_ snapshot: XCUIElementSnapshot) -> DescribeUINode {
-    let children = snapshot.children.map { buildDescribeNode($0) }
-    return DescribeUINode(
+func buildSnapshotNode(_ snapshot: XCUIElementSnapshot) -> SnapshotNode {
+    let children = snapshot.children.map { buildSnapshotNode($0) }
+    return SnapshotNode(
         identifier: snapshot.identifier,
         elementType: elementTypeName(snapshot.elementType),
         value: JSONValue.fromAny(snapshot.value),
