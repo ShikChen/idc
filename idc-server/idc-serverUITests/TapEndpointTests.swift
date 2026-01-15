@@ -127,7 +127,7 @@ final class TapEndpointTests: XCTestCase {
             .descendants(type: "button"),
             .matchPredicate(format: "label ==", args: [])
         )
-        let (data, response) = try await postTapRaw(plan)
+        let (data, response) = try await postTapRaw(plan: plan, at: nil)
         XCTAssertEqual(response.statusCode, 400)
         let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
         XCTAssertTrue(error.error.contains("Invalid predicate"))
@@ -138,7 +138,7 @@ final class TapEndpointTests: XCTestCase {
             .descendants(type: "button"),
             .pickOnly
         )
-        let (data, response) = try await postTapRaw(plan)
+        let (data, response) = try await postTapRaw(plan: plan, at: nil)
         XCTAssertEqual(response.statusCode, 400)
         let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
         XCTAssertTrue(error.error.lowercased().contains("unique"))
@@ -146,7 +146,7 @@ final class TapEndpointTests: XCTestCase {
 
     func testTapEmptyPlanError() async throws {
         let plan = ExecutionPlan(pipeline: [])
-        let (data, response) = try await postTapRaw(plan)
+        let (data, response) = try await postTapRaw(plan: plan, at: nil)
         XCTAssertEqual(response.statusCode, 400)
         let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
         XCTAssertTrue(error.error.lowercased().contains("selector") || error.error.lowercased().contains("tap point"))
@@ -237,6 +237,30 @@ final class TapEndpointTests: XCTestCase {
         }
     }
 
+    func testTapScreenPointPercent() async throws {
+        let point = await MainActor.run { () -> TapPoint in
+            let app = XCUIApplication()
+            let button = app.buttons["Tap Me"]
+            XCTAssertTrue(button.waitForExistence(timeout: 5))
+            let appFrame = app.frame
+            let buttonFrame = button.frame
+            let xPct = ((buttonFrame.midX - appFrame.minX) / appFrame.width) * 100.0
+            let yPct = ((buttonFrame.midY - appFrame.minY) / appFrame.height) * 100.0
+            return TapPoint(
+                space: .screen,
+                point: PointSpec(
+                    x: PointComponent(value: xPct, unit: .pct),
+                    y: PointComponent(value: yPct, unit: .pct)
+                )
+            )
+        }
+        let (data, response) = try await postTapRaw(plan: nil, at: point)
+        XCTAssertEqual(response.statusCode, 200)
+        let payload = try JSONDecoder().decode(TapResponse.self, from: data)
+        XCTAssertNil(payload.selected)
+        try await waitForTapCount("Tap Count: 1")
+    }
+
     private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
         ExecutionPlan(pipeline: ops)
     }
@@ -258,19 +282,19 @@ final class TapEndpointTests: XCTestCase {
     }
 
     private func postTap(_ plan: ExecutionPlan) async throws -> (TapResponse, HTTPURLResponse) {
-        let (data, response) = try await postTapRaw(plan)
+        let (data, response) = try await postTapRaw(plan: plan, at: nil)
         let httpResponse = response
         XCTAssertEqual(httpResponse.statusCode, 200)
         let payload = try JSONDecoder().decode(TapResponse.self, from: data)
         return (payload, httpResponse)
     }
 
-    private func postTapRaw(_ plan: ExecutionPlan) async throws -> (Data, HTTPURLResponse) {
+    private func postTapRaw(plan: ExecutionPlan?, at: TapPoint?) async throws -> (Data, HTTPURLResponse) {
         let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/tap"))
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = TapRequest(plan: plan, at: nil)
+        let body = TapRequest(plan: plan, at: at)
         request.httpBody = try JSONEncoder().encode(body)
         let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)

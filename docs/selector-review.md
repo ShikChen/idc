@@ -17,17 +17,17 @@
 - [x] Protect server from `NSPredicate` format crashes (Obj‑C try/catch shim or disable raw predicate). (gpt-old, gpt-new)
 - [x] Provide clear error for unknown ops (CLI newer than server). (claude-new) (tracked in PLAN.md)
 - [x] Normalize error message style/capitalization and remove unused error cases. (claude-new, gpt-new)
-- (TODO) Consider structured error positions for parse failures (line/column). (claude-old)
+- [x] Consider structured error positions for parse failures (line/column). (claude-old)
 
 ## Security / Robustness
-- (TODO) Treat `:predicate(...)` and regex as “unsafe” or guard with limits (length caps, disallow expensive constructs) to avoid DoS. (gpt-old, gpt-new)
-- (TODO) Cap selector length / pipeline length to prevent resource abuse. (claude-new, gpt-old)
-- (TODO) Add server-side auth or bind to localhost only (avoid remote abuse). (gpt-new)
+- [x] Treat `:predicate(...)` and regex as “unsafe” or guard with limits (length caps, disallow expensive constructs) to avoid DoS. (gpt-old, gpt-new)
+- [x] Cap selector length / pipeline length to prevent resource abuse. (claude-new, gpt-old)
+- [x] Add server-side auth or bind to localhost only (avoid remote abuse). (gpt-new)
 
 ## Performance
-- (TODO) Avoid `query.count` unless needed; use `firstMatch.exists` first and document negative-index cost. (claude-new, gpt-old, gpt-new)
-- (TODO) Avoid `allElementsBoundByIndex` for smart tap if possible; prefer firstMatch or bounded search. (gemini-new, gpt-old, gpt-new)
-- (TODO) Avoid screenshot for screen taps when not necessary; use `app.frame` or only when `%` is used. (gpt-old, gpt-new)
+- [x] Avoid `query.count` unless needed; use `firstMatch.exists` first and document negative-index cost. (claude-new, gpt-old, gpt-new)
+- [x] Avoid `allElementsBoundByIndex` for smart tap if possible; prefer firstMatch or bounded search. (gemini-new, gpt-old, gpt-new)
+- [x] Avoid screenshot for screen taps when not necessary; use `app.frame` or only when `%` is used. (gpt-old, gpt-new)
 - (TODO) Optimize predicate string building to reduce intermediate allocations. (claude-new)
 - (TODO) Address potential O(n^2) in `DescribeUI` flattening if still present. (gpt-new)
 

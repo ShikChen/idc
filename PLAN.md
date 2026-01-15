@@ -50,6 +50,7 @@
 - [ ] `idc ui input`
 - [ ] `idc describe-ui`
 - [ ] `idc describe-ui` 顯示/輸出 ref，`idc tap @ref` 支援
+- [ ] CLI/Server 版本相容性檢查（未知 op 的清楚錯誤訊息）
 - [ ] 服務發現（Bonjour/mDNS 或 localhost:port）
 - [ ] Simulator 和 Real Device 統一介面
 - [ ] 自動選擇設備（只有一台時不需 `--udid`）

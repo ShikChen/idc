@@ -206,7 +206,7 @@ private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapP
     if let point {
         switch point.space {
         case .screen:
-            let screenPoint = resolveScreenPoint(point.point)
+            let screenPoint = resolveScreenPoint(app: app, point: point.point)
             tapScreen(app: app, point: screenPoint)
         case .element:
             guard let element else {
@@ -268,10 +268,15 @@ private func toggleTapTarget(for element: XCUIElement) -> XCUIElement {
     return best
 }
 
-private func resolveScreenPoint(_ point: PointSpec) -> CGPoint {
-    let screenSize = XCUIScreen.main.screenshot().image.size
-    let x = resolvePointComponent(point.x, size: screenSize.width)
-    let y = resolvePointComponent(point.y, size: screenSize.height)
+private func resolveScreenPoint(app: XCUIApplication, point: PointSpec) -> CGPoint {
+    let size: CGSize
+    if point.x.unit == .pct || point.y.unit == .pct {
+        size = app.frame.size
+    } else {
+        size = .zero
+    }
+    let x = resolvePointComponent(point.x, size: size.width)
+    let y = resolvePointComponent(point.y, size: size.height)
     return CGPoint(x: x, y: y)
 }
 
