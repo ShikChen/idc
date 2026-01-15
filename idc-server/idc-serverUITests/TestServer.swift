@@ -204,6 +204,7 @@ private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResp
 
 private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapPoint?) throws {
     if let point {
+        try validateTapPoint(point)
         switch point.space {
         case .screen:
             let screenPoint = resolveScreenPoint(app: app, point: point.point)
@@ -221,6 +222,17 @@ private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapP
         throw PlanError.invalidPlan("Missing selector or tap point.")
     }
     tapElementSmart(element)
+}
+
+private func validateTapPoint(_ point: TapPoint) throws {
+    try validatePointComponent(point.point.x)
+    try validatePointComponent(point.point.y)
+}
+
+private func validatePointComponent(_ component: PointComponent) throws {
+    guard component.value.isFinite else {
+        throw PlanError.invalidPlan("Tap point must be finite.")
+    }
 }
 
 private func tapElement(element: XCUIElement, point: PointSpec) {

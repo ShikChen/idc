@@ -32,7 +32,7 @@
 - [x] Address potential O(n^2) in `snapshot` flattening if still present. (gpt-new)
 
 ## Tap Point / Coordinate Semantics
-- (TODO) Validate tap point inputs: NaN/Inf, percent bounds, and optional clamping rules. (gemini-new, gpt-old, gpt-new)
+- [x] Validate tap point inputs: NaN/Inf, percent bounds, and optional clamping rules. (gemini-new, gpt-old, gpt-new)
 - (TODO) Decide whether percent >100 or negative is allowed; if not, enforce on CLI/server. (gemini-new, gpt-old, gpt-new)
 - (TODO) Clarify `accessibilityActivationPoint` behavior: XCUI can’t read it; `.tap()` uses it. Document or expose via app debug if needed. (gemini-old)
 

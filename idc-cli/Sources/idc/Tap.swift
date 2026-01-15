@@ -80,6 +80,7 @@ struct TapPoint: Encodable {
 enum TapParseError: Error, CustomStringConvertible {
     case invalidFormat
     case invalidNumber(String)
+    case nonFinite(String)
 
     var description: String {
         switch self {
@@ -87,6 +88,8 @@ enum TapParseError: Error, CustomStringConvertible {
             return "Expected point format x,y or x%,y%."
         case let .invalidNumber(value):
             return "Invalid number: \(value)."
+        case let .nonFinite(value):
+            return "Point value must be finite: \(value)."
         }
     }
 }
@@ -117,6 +120,9 @@ private func parsePointComponent(_ raw: String) throws -> PointComponent {
     }
     guard let value = Double(numberText) else {
         throw TapParseError.invalidNumber(numberText)
+    }
+    guard value.isFinite else {
+        throw TapParseError.nonFinite(numberText)
     }
     return PointComponent(value: value, unit: unit)
 }

@@ -31,6 +31,12 @@ final class TapTests: XCTestCase {
         XCTAssertThrowsError(try parseTapPoint("10,abc"))
     }
 
+    func testParseTapPointNonFinite() {
+        XCTAssertThrowsError(try parseTapPoint("nan,0"))
+        XCTAssertThrowsError(try parseTapPoint("inf,0"))
+        XCTAssertThrowsError(try parseTapPoint("-inf,0"))
+    }
+
     func testEmptySelectorRequiresPoint() async throws {
         await XCTAssertThrowsErrorAsync {
             var tap = Tap()
