@@ -54,6 +54,7 @@
 - [ ] `idc snapshot` 顯示/輸出 ref，`idc tap @ref` 支援
 - [ ] `idc snapshot` 支援 interactive/compact/maxDepth/filter 參數
 - [ ] CLI/Server 版本相容性檢查（未知 op 的清楚錯誤訊息）
+- [ ] 共用模型層（CLI/Server）以避免資料結構重複
 - [ ] 服務發現（Bonjour/mDNS 或 localhost:port）
 - [ ] Simulator 和 Real Device 統一介面
 - [ ] 自動選擇設備（只有一台時不需 `--udid`）
