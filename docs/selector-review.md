@@ -40,7 +40,7 @@
 - [x] Respect CLI timeout in server retry loop (make wait configurable). (gemini-new, gpt-new)
 - [x] Retry logic should include foreground app discovery; handle race conditions or allow bundle id selection. (gemini-new, gpt-new)
 - [x] Return HTTP status codes that distinguish invalid input vs not found vs server error. (gpt-new)
-- (TODO) Validate plan version on server. (gpt-old, gpt-new)
+- [x] Validate plan version on server. (gpt-old, gpt-new)
 
 ## Spec / Grammar Completeness
 - (TODO) Add missing grammar definitions (integer/digit/char/bool/attrName/boolAttr/elementTypeName). (claude-old)
