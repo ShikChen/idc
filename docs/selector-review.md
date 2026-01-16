@@ -49,7 +49,7 @@
 - [x] Document when `matchTypeIdentifier` optimization is emitted and its constraints. (claude-old)
 
 ## Tests to Add / Expand
-- (TODO) Add tests for negative index (`[-1]`, `[2]`), nested `:is` / `:not`, multiple `:has`, Unicode strings, empty string `""`, and shorthand inside `:has`. (claude-old, claude-new)
+- [x] Add tests for negative index (`[-1]`, `[2]`), nested `:is` / `:not`, multiple `:has`, Unicode strings, empty string `""`, and shorthand inside `:has`. (claude-old, claude-new)
 - [x] Add tests for whitespace semantics (e.g. `button [enabled]`, `cell :only button`, `cell :has(button)`). (gpt-old)
 - (TODO) Add tests for invalid predicates to ensure server doesn’t crash and returns 400. (gpt-old)
 - [x] Add tests for tap point validation (NaN/Inf/out-of-range). (gpt-old)

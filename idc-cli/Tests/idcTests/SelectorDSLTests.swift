@@ -215,6 +215,15 @@ final class SelectorDSLTests: XCTestCase {
         ))
     }
 
+    func testMultipleHasFilters() throws {
+        let program = try compile("cell:has(button):has(staticText)")
+        XCTAssertEqual(program, plan(
+            .descendants(type: "cell"),
+            .containPredicate(format: "(elementType == %@)", args: [typeArg("button")]),
+            .containPredicate(format: "(elementType == %@)", args: [typeArg("statictext")])
+        ))
+    }
+
     func testIsAndNot() throws {
         let program = try compile(#"button:is(button[label="A"], button[label="B"])"#)
         XCTAssertEqual(program, plan(
@@ -229,6 +238,15 @@ final class SelectorDSLTests: XCTestCase {
         XCTAssertEqual(notProgram, plan(
             .descendants(type: "button"),
             .matchPredicate(format: "(NOT ((isEnabled == %@)))", args: [arg(true)])
+        ))
+
+        let nested = try compile(#"button:is(:not([enabled]), [label="OK"])"#)
+        XCTAssertEqual(nested, plan(
+            .descendants(type: "button"),
+            .matchPredicate(
+                format: "(((NOT ((isEnabled == %@)))) OR ((label == %@)))",
+                args: [arg(true), arg("OK")]
+            )
         ))
     }
 
@@ -252,6 +270,13 @@ final class SelectorDSLTests: XCTestCase {
         XCTAssertEqual(indexed, plan(
             .descendants(type: "cell"),
             .pickIndex(2),
+            .descendants(type: "button")
+        ))
+
+        let negative = try compile("cell[-1] button")
+        XCTAssertEqual(negative, plan(
+            .descendants(type: "cell"),
+            .pickIndex(-1),
             .descendants(type: "button")
         ))
     }
@@ -299,6 +324,33 @@ final class SelectorDSLTests: XCTestCase {
         XCTAssertEqual(program, plan(
             .descendants(type: "any"),
             .matchPredicate(format: "(label == %@)", args: [arg("A\"B")])
+        ))
+    }
+
+    func testUnicodeAndEmptyStringShorthand() throws {
+        let unicode = try compile(#"["設定"]"#)
+        XCTAssertEqual(unicode, plan(
+            .descendants(type: "any"),
+            .matchIdentifier("設定")
+        ))
+
+        let empty = try compile(#"[""]"#)
+        XCTAssertEqual(empty, plan(
+            .descendants(type: "any"),
+            .matchIdentifier("")
+        ))
+    }
+
+    func testHasShorthandWithoutType() throws {
+        let program = try compile(#"cell:has(["OK"])"#)
+        XCTAssertEqual(program, plan(
+            .descendants(type: "cell"),
+            .containPredicate(
+                format: "((identifier == %@) OR (title == %@) OR (label == %@) OR (value == %@) OR (placeholderValue == %@))",
+                args: [
+                    arg("OK"), arg("OK"), arg("OK"), arg("OK"), arg("OK"),
+                ]
+            )
         ))
     }
 
