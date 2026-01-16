@@ -44,7 +44,7 @@
 
 ## Spec / Grammar Completeness
 - [x] Add missing grammar definitions (integer/digit/char/bool/attrName/boolAttr/elementTypeName). (claude-old)
-- (TODO) Clarify ambiguity between `["text"]` and `[integer]` in grammar. (claude-old)
+- [x] Clarify ambiguity between `["text"]` and `[integer]` in grammar. (claude-old)
 - (TODO) Explicitly state “one picker per step”. (claude-old)
 - (TODO) Document when `matchTypeIdentifier` optimization is emitted and its constraints. (claude-old)
 
