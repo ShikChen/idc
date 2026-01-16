@@ -181,7 +181,9 @@ actor TestServer {
 private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResponse {
     let executor = PlanExecutor()
     var lastError: Error?
-    for attempt in 0 ..< 5 {
+    let maxAttempts = 5
+    let retryDelayNs: UInt64 = 200_000_000
+    for attempt in 0 ..< maxAttempts {
         do {
             return try await MainActor.run {
                 guard let app = RunningApp.getForegroundApp() else {
@@ -198,8 +200,8 @@ private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResp
             }
         } catch let error as PlanError {
             lastError = error
-            if case .noMatches = error, attempt < 4 {
-                try await Task.sleep(nanoseconds: 200_000_000)
+            if case .noMatches = error, attempt < (maxAttempts - 1) {
+                try await Task.sleep(nanoseconds: retryDelayNs)
                 continue
             }
             throw error

@@ -28,6 +28,7 @@
 - [ ] `GET /snapshot` 支援 ref 產出（snapshotId + ref map）
 - [ ] `GET /snapshot` 支援 interactive/compact/maxDepth/filter 等 options
 - [ ] Server retry loops respect CLI timeout (make waits configurable)
+- [ ] Derive server retry timing from request timeout (replace fixed sleeps)
 - [ ] `POST /tap` 點擊端點
 - [ ] `POST /swipe` 滑動端點
 - [ ] `POST /input` 輸入文字端點

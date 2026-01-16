@@ -59,4 +59,4 @@
 - [x] Deduplicate protocol/model types between CLI and server (shared module). (claude-new, gpt-old, gpt-new)
 - [x] Replace cryptic typealias `P<T>` with clearer naming. (claude-new)
 - [x] Add doc comments for public parser/compiler APIs. (claude-new)
-- (TODO) Replace magic constants (retry count, sleep interval) with config or derived from timeout. (gpt-new)
+- [x] Replace magic constants (retry count, sleep interval) with config or derived from timeout. (gpt-new)
