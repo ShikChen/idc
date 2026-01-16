@@ -23,7 +23,7 @@ struct SelectorParser {
 
 private enum DSL {
     typealias Input = Substring
-    typealias P<T> = AnyParser<Input, T>
+    typealias Parser<T> = AnyParser<Input, T>
 
     private struct StepCore {
         var type: String?
@@ -36,7 +36,7 @@ private enum DSL {
         case string(StringField)
     }
 
-    static var selector: P<SelectorAST> {
+    static var selector: Parser<SelectorAST> {
         let step = stepCore(allowHas: true, allowPick: true, allowOnly: true)
         let combinators = combinatorsParser(step)
         return Parse {
@@ -56,7 +56,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func combinatorParser(_ step: P<StepCore>) -> P<(Axis, StepCore)> {
+    private static func combinatorParser(_ step: Parser<StepCore>) -> Parser<(Axis, StepCore)> {
         AnyParser { input in
             var lookahead = input
             while lookahead.first?.isWhitespace == true {
@@ -76,7 +76,7 @@ private enum DSL {
         }
     }
 
-    private static func combinatorsParser(_ step: P<StepCore>) -> P<[(Axis, StepCore)]> {
+    private static func combinatorsParser(_ step: Parser<StepCore>) -> Parser<[(Axis, StepCore)]> {
         AnyParser { input in
             var results: [(Axis, StepCore)] = []
             while true {
@@ -102,8 +102,8 @@ private enum DSL {
         }
     }
 
-    private static func stepCore(allowHas: Bool, allowPick: Bool, allowOnly: Bool) -> P<StepCore> {
-        let pick: P<Pick?> = allowPick
+    private static func stepCore(allowHas: Bool, allowPick: Bool, allowOnly: Bool) -> Parser<StepCore> {
+        let pick: Parser<Pick?> = allowPick
             ? Optionally { pickParser(allowOnly: allowOnly) }.eraseToAnyParser()
             : Always(nil).eraseToAnyParser()
         return AnyParser { input in
@@ -119,7 +119,7 @@ private enum DSL {
         }
     }
 
-    private static func simpleStep() -> P<SimpleStep> {
+    private static func simpleStep() -> Parser<SimpleStep> {
         Lazy {
             stepCore(allowHas: false, allowPick: false, allowOnly: false)
                 .flatMap { core in
@@ -132,7 +132,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func filtersParser(allowHas: Bool, allowPick: Bool) -> P<[Filter]> {
+    private static func filtersParser(allowHas: Bool, allowPick: Bool) -> Parser<[Filter]> {
         AnyParser { input in
             var filters: [Filter] = []
             while let first = input.first {
@@ -156,7 +156,7 @@ private enum DSL {
         }
     }
 
-    private static func bracketFilter() -> P<Filter> {
+    private static func bracketFilter() -> Parser<Filter> {
         AnyParser { input in
             var lookahead = input
             guard lookahead.first == "[" else {
@@ -173,7 +173,7 @@ private enum DSL {
         }
     }
 
-    private static func shorthandFilter() -> P<Filter> {
+    private static func shorthandFilter() -> Parser<Filter> {
         Parse {
             "["
             Whitespace()
@@ -186,7 +186,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func attrFilter() -> P<Filter> {
+    private static func attrFilter() -> Parser<Filter> {
         AnyParser { input in
             try expectPrefix("[", in: &input)
             consumeWhitespace(&input)
@@ -245,7 +245,7 @@ private enum DSL {
         }
     }
 
-    private static func pseudoFilter(allowHas: Bool) -> P<Filter> {
+    private static func pseudoFilter(allowHas: Bool) -> Parser<Filter> {
         let not = Parse { ":"; "not"; Whitespace(); "("; Whitespace(); simpleStep(); Whitespace(); ")" }
             .map(Filter.not)
 
@@ -296,7 +296,7 @@ private enum DSL {
         }
     }
 
-    private static func pickParser(allowOnly: Bool) -> P<Pick> {
+    private static func pickParser(allowOnly: Bool) -> Parser<Pick> {
         let index = Parse { "["; Whitespace(); intLiteral(); Whitespace(); "]" }
             .map(Pick.index)
         if allowOnly {
@@ -306,7 +306,7 @@ private enum DSL {
         return index.eraseToAnyParser()
     }
 
-    private static func identifier() -> P<String> {
+    private static func identifier() -> Parser<String> {
         Parse {
             Prefix(1) { isIdentStart($0) }
             Prefix(0...) { isIdentChar($0) }
@@ -315,7 +315,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func attributeName() -> P<(String, AttrSpec)> {
+    private static func attributeName() -> Parser<(String, AttrSpec)> {
         identifier()
             .flatMap { name in
                 validate {
@@ -337,7 +337,7 @@ private enum DSL {
         "t": "\t",
     ]
 
-    private static func escapedChar() -> P<Character> {
+    private static func escapedChar() -> Parser<Character> {
         Parse { "\\"; Prefix(1) }
             .flatMap { value in
                 validate {
@@ -350,13 +350,13 @@ private enum DSL {
             .eraseToAnyParser()
     }
 
-    private static func normalChar() -> P<Character> {
+    private static func normalChar() -> Parser<Character> {
         Prefix(1) { $0 != "\"" && $0 != "\\" }
             .map { $0.first! }
             .eraseToAnyParser()
     }
 
-    private static func quotedString() -> P<String> {
+    private static func quotedString() -> Parser<String> {
         Parse {
             "\""
             Many(into: "") { $0.append($1) } element: { OneOf { escapedChar(); normalChar() } }
@@ -365,7 +365,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func caseFlag() -> P<CaseFlag> {
+    private static func caseFlag() -> Parser<CaseFlag> {
         Parse {
             Optionally {
                 Whitespace()
@@ -379,7 +379,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    fileprivate static func matchOperator() -> P<StringMatch> {
+    fileprivate static func matchOperator() -> Parser<StringMatch> {
         OneOf {
             Parse { "*=" }.map { StringMatch.contains }
             Parse { "^=" }.map { StringMatch.begins }
@@ -390,7 +390,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func boolLiteral() -> P<Bool> {
+    private static func boolLiteral() -> Parser<Bool> {
         OneOf {
             Parse { "true" }.map { true }
             Parse { "false" }.map { false }
@@ -398,7 +398,7 @@ private enum DSL {
         .eraseToAnyParser()
     }
 
-    private static func intLiteral() -> P<Int> {
+    private static func intLiteral() -> Parser<Int> {
         AnyParser { input in
             var snapshot = input
             var sign = 1
@@ -444,7 +444,7 @@ private enum DSL {
         return StepCore(type: type, filters: filters, pick: pick)
     }
 
-    private static func validate<T>(_ work: () throws -> T) -> P<T> {
+    private static func validate<T>(_ work: () throws -> T) -> Parser<T> {
         do {
             return try Always(work()).eraseToAnyParser()
         } catch {
