@@ -20,7 +20,7 @@ struct SelectorCompiler {
                caseFlag == .s
             {
                 pipeline.removeLast()
-                pipeline.append(try axisOperation(step: step, overrideType: "any"))
+                try pipeline.append(axisOperation(step: step, overrideType: "any"))
                 let normalizedType = try normalizeType(typeName)
                 pipeline.append(.matchTypeIdentifier(type: normalizedType, value: value))
                 filters.removeAll()

@@ -82,7 +82,7 @@ private enum DSL {
             while true {
                 guard let first = input.first else { break }
                 if first == ">" {
-                    results.append(try combinatorParser(step).parse(&input))
+                    try results.append(combinatorParser(step).parse(&input))
                     continue
                 }
                 if first.isWhitespace {
@@ -93,7 +93,7 @@ private enum DSL {
                     if lookahead.isEmpty {
                         break
                     }
-                    results.append(try combinatorParser(step).parse(&input))
+                    try results.append(combinatorParser(step).parse(&input))
                     continue
                 }
                 break
@@ -140,14 +140,14 @@ private enum DSL {
                     if allowPick, isPickIndexPrefix(input) {
                         break
                     }
-                    filters.append(try bracketFilter().parse(&input))
+                    try filters.append(bracketFilter().parse(&input))
                     continue
                 }
                 if first == ":" {
                     if allowPick, isPickOnlyPrefix(input) {
                         break
                     }
-                    filters.append(try pseudoFilter(allowHas: allowHas).parse(&input))
+                    try filters.append(pseudoFilter(allowHas: allowHas).parse(&input))
                     continue
                 }
                 break
@@ -469,12 +469,16 @@ private func isPickIndexPrefix(_ input: Substring) -> Bool {
     var snapshot = input
     guard snapshot.first == "[" else { return false }
     snapshot.removeFirst()
-    while snapshot.first?.isWhitespace == true { snapshot.removeFirst() }
+    while snapshot.first?.isWhitespace == true {
+        snapshot.removeFirst()
+    }
     if snapshot.first == "-" { snapshot.removeFirst() }
     let digits = snapshot.prefix(while: isDigit)
     guard !digits.isEmpty else { return false }
     snapshot.removeFirst(digits.count)
-    while snapshot.first?.isWhitespace == true { snapshot.removeFirst() }
+    while snapshot.first?.isWhitespace == true {
+        snapshot.removeFirst()
+    }
     return snapshot.first == "]"
 }
 

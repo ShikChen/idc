@@ -25,6 +25,7 @@ enum StringMatch: String, Equatable {
     case ends = "ENDSWITH"
     case regex = "MATCHES"
 }
+
 enum StringField: String, Equatable { case identifier, title, label, value, placeholderValue }
 enum BoolField: String, Equatable { case isEnabled, isSelected, hasFocus }
 enum PointUnit: String, Equatable, Encodable { case pt, pct }

@@ -12,7 +12,7 @@ enum PredicateValidationError: Error, CustomStringConvertible {
     }
 }
 
-struct PredicateValidator {
+enum PredicateValidator {
     static func validate(_ format: String) throws {
         var errorMessage: NSString?
         let predicate = ObjCExceptionCatcher.perform({
