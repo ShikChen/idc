@@ -45,15 +45,15 @@
 ## Spec / Grammar Completeness
 - [x] Add missing grammar definitions (integer/digit/char/bool/attrName/boolAttr/elementTypeName). (claude-old)
 - [x] Clarify ambiguity between `["text"]` and `[integer]` in grammar. (claude-old)
-- (TODO) Explicitly state “one picker per step”. (claude-old)
+- [x] Explicitly state “one picker per step”. (claude-old)
 - (TODO) Document when `matchTypeIdentifier` optimization is emitted and its constraints. (claude-old)
 
 ## Tests to Add / Expand
 - (TODO) Add tests for negative index (`[-1]`, `[2]`), nested `:is` / `:not`, multiple `:has`, Unicode strings, empty string `""`, and shorthand inside `:has`. (claude-old, claude-new)
 - [x] Add tests for whitespace semantics (e.g. `button [enabled]`, `cell :only button`, `cell :has(button)`). (gpt-old)
 - (TODO) Add tests for invalid predicates to ensure server doesn’t crash and returns 400. (gpt-old)
-- (TODO) Add tests for tap point validation (NaN/Inf/out-of-range). (gpt-old)
-- (TODO) Add tests for plan version mismatch. (gpt-old)
+- [x] Add tests for tap point validation (NaN/Inf/out-of-range). (gpt-old)
+- [x] Add tests for plan version mismatch. (gpt-old)
 
 ## Maintainability / Structure
 - (TODO) Deduplicate protocol/model types between CLI and server (shared module). (claude-new, gpt-old, gpt-new)
