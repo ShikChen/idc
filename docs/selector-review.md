@@ -33,13 +33,13 @@
 
 ## Tap Point / Coordinate Semantics
 - [x] Validate tap point inputs: NaN/Inf, percent bounds, and optional clamping rules. (gemini-new, gpt-old, gpt-new)
-- (TODO) Decide whether percent >100 or negative is allowed; if not, enforce on CLI/server. (gemini-new, gpt-old, gpt-new)
-- (TODO) Clarify `accessibilityActivationPoint` behavior: XCUI can’t read it; `.tap()` uses it. Document or expose via app debug if needed. (gemini-old)
+- [x] Decide whether percent >100 or negative is allowed; if not, enforce on CLI/server. (gemini-new, gpt-old, gpt-new)
+- [x] Clarify `accessibilityActivationPoint` behavior: XCUI can’t read it; `.tap()` uses it. Document or expose via app debug if needed. (gemini-old)
 
 ## Server Behavior / API Contracts
-- (TODO) Respect CLI timeout in server retry loop (make wait configurable). (gemini-new, gpt-new)
-- (TODO) Retry logic should include foreground app discovery; handle race conditions or allow bundle id selection. (gemini-new, gpt-new)
-- (TODO) Return HTTP status codes that distinguish invalid input vs not found vs server error. (gpt-new)
+- [x] Respect CLI timeout in server retry loop (make wait configurable). (gemini-new, gpt-new)
+- [x] Retry logic should include foreground app discovery; handle race conditions or allow bundle id selection. (gemini-new, gpt-new)
+- [x] Return HTTP status codes that distinguish invalid input vs not found vs server error. (gpt-new)
 - (TODO) Validate plan version on server. (gpt-old, gpt-new)
 
 ## Spec / Grammar Completeness
