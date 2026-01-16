@@ -34,6 +34,19 @@ simpleFilter := attrFilter | textFilter | isFilter | notFilter | predicateFilter
 caseFlag := "i" | "s"
 string := '"' (char | escape)* '"'
 escape := "\\" ("\"" | "\\" | "n" | "t" | "r")
+
+attrOp := "=" | "*=" | "^=" | "$=" | "~="
+bool := "true" | "false"
+
+integer := "-"? digit+
+digit := "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9"
+
+char := any Unicode scalar except `"` or `\`
+
+attrName := "identifier" | "title" | "label" | "value" | "placeholderValue" | "placeholder"
+boolAttr := "enabled" | "isEnabled" | "selected" | "isSelected" | "focused" | "hasFocus" | "disabled"
+
+elementTypeName := <XCUI element type name, case-insensitive>
 ```
 
 - Space (` `) means **descendants**.
