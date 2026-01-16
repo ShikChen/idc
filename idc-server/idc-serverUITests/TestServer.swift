@@ -149,11 +149,17 @@ actor TestServer {
                     headers: [.contentType: "application/json"],
                     body: body
                 )
-            } catch {
-                let message = error.localizedDescription
-                let body = try JSONEncoder().encode(ErrorResponse(error: message))
+            } catch let error as PlanError {
+                let body = try JSONEncoder().encode(ErrorResponse(error: error.localizedDescription))
                 return HTTPResponse(
                     statusCode: .badRequest,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            } catch {
+                let body = try JSONEncoder().encode(ErrorResponse(error: error.localizedDescription))
+                return HTTPResponse(
+                    statusCode: .internalServerError,
                     headers: [.contentType: "application/json"],
                     body: body
                 )
