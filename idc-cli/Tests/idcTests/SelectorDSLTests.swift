@@ -178,6 +178,32 @@ final class SelectorDSLTests: XCTestCase {
         ))
     }
 
+    func testMatchTypeIdentifierOptimization() throws {
+        let optimized = try compile(#"button["Settings"]"#)
+        XCTAssertEqual(optimized, plan(
+            .descendants(type: "any"),
+            .matchTypeIdentifier(type: "button", value: "Settings")
+        ))
+
+        let caseInsensitive = try compile(#"button["Settings" i]"#)
+        XCTAssertEqual(caseInsensitive, plan(
+            .descendants(type: "button"),
+            .matchPredicate(
+                format: "((identifier ==[c] %@) OR (title ==[c] %@) OR (label ==[c] %@) OR (value ==[c] %@) OR (placeholderValue ==[c] %@))",
+                args: [
+                    arg("Settings"), arg("Settings"), arg("Settings"), arg("Settings"), arg("Settings"),
+                ]
+            )
+        ))
+
+        let withExtraFilter = try compile(#"button["Settings"][label="X"]"#)
+        XCTAssertEqual(withExtraFilter, plan(
+            .descendants(type: "button"),
+            .matchIdentifier("Settings"),
+            .matchPredicate(format: "(label == %@)", args: [arg("X")])
+        ))
+    }
+
     func testHasTypeAndFilter() throws {
         let program = try compile(#"cell:has(button[label="OK"])"#)
         XCTAssertEqual(program, plan(
