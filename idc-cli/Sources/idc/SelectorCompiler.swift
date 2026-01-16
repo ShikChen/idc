@@ -1,6 +1,8 @@
 // MARK: - Compiler
 
+/// Compiles a selector AST into a server-ready execution plan.
 struct SelectorCompiler {
+    /// Compile AST into a sequence of XCUI query operations.
     func compile(_ selector: SelectorAST) throws -> ExecutionPlan {
         guard !selector.steps.isEmpty else {
             return ExecutionPlan(pipeline: [])

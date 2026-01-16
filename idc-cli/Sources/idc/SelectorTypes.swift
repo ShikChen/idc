@@ -1,9 +1,11 @@
 // MARK: - AST
 
+/// Root selector AST containing ordered steps.
 struct SelectorAST: Equatable {
     var steps: [SelectorStep]
 }
 
+/// A single selector step with axis, optional type, filters, and optional picker.
 struct SelectorStep: Equatable {
     var axis: Axis
     var type: String?
@@ -11,6 +13,7 @@ struct SelectorStep: Equatable {
     var pick: Pick?
 }
 
+/// A simple step used inside pseudo-classes (no combinators/pickers).
 struct SimpleStep: Equatable {
     var type: String?
     var filters: [Filter]
@@ -40,6 +43,7 @@ struct PointSpec: Equatable, Encodable {
     var y: PointComponent
 }
 
+/// Filter clause attached to a selector step.
 enum Filter: Equatable {
     case shorthand(String, CaseFlag)
     case attrString(field: StringField, match: StringMatch, value: String, caseFlag: CaseFlag)
@@ -50,15 +54,18 @@ enum Filter: Equatable {
     case predicate(String)
 }
 
+/// Picker clause that narrows a step to a single element.
 enum Pick: Equatable { case index(Int), only }
 
 // MARK: - Execution Plan
 
+/// Serialized plan the server executes as XCUI query operations.
 struct ExecutionPlan: Equatable, Codable {
     var version: Int = 3
     var pipeline: [ExecutionOp]
 }
 
+/// Opcode representing a single XCUI query operation.
 enum ExecutionOp: Equatable, Codable {
     case descendants(type: String)
     case children(type: String)

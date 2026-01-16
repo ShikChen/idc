@@ -2,6 +2,7 @@ import Parsing
 
 // MARK: - Parser
 
+/// Parses selector DSL strings into an AST.
 struct SelectorParser {
     private var input: Substring
 
@@ -9,6 +10,7 @@ struct SelectorParser {
         self.input = input[...]
     }
 
+    /// Parse the full selector input or throw a user-facing parse error.
     mutating func parseSelector() throws -> SelectorAST {
         if input.allSatisfy({ $0.isWhitespace }) {
             return SelectorAST(steps: [])
