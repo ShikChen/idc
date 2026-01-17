@@ -1,6 +1,6 @@
 #import "XCUIApplication+Helper.h"
-#import "AXClientProxy.h"
-#import "XCTestDaemonsProxy.h"
+#import "../AXClientProxy.h"
+#import "../XCTestDaemonsProxy.h"
 
 @implementation XCUIApplication (Helper)
 

@@ -25,7 +25,7 @@
 - [ ] 新增 tap point 超出範圍 / 非有限值 / limit 上限的測試
 
 ## 檔案結構調整
-- [ ] 將 `TestServer.swift` 移到 `Server/`
-- [ ] 建立 `Models/`（含 `Common/`、`Tap/`、`Find/`、`Snapshot/`、`Plan/`）
-- [ ] ObjC bridge 放到 `Infrastructure/ObjC/`（AXClientProxy、XCTestDaemonsProxy 等）
+- [x] 將 `TestServer.swift` 移到 `Server/`
+- [x] 建立 `Models/`（攤平）
+- [x] ObjC bridge 放到 `Infrastructure/ObjC/`（AXClientProxy、XCTestDaemonsProxy 等）
 - [ ] 測試 helper 抽到 `Tests/Helpers/`（共用 plan builder、waitForForegroundFixture 等）

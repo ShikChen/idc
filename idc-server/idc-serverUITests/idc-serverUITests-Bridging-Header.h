@@ -1,2 +1,2 @@
-#import "Categories/XCUIApplication+Helper.h"
-#import "ObjCExceptionCatcher.h"
+#import "Infrastructure/ObjC/Categories/XCUIApplication+Helper.h"
+#import "Infrastructure/ObjC/ObjCExceptionCatcher.h"
