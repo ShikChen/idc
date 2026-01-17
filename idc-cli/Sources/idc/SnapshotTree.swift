@@ -99,10 +99,10 @@ func snapshotLine(for node: SnapshotNode) -> String {
     addString("label", node.label, skipIfEmpty: true)
     addString("title", node.title, skipIfEmpty: true)
     addString("identifier", node.identifier, skipIfEmpty: true)
-    if let value = node.value {
+    if let value = node.value, !isEmptyStringValue(value) {
         parts.append("value=\(formatSnapshotValue(value))")
     }
-    if let placeholder = node.placeholderValue {
+    if let placeholder = node.placeholderValue, !placeholder.isEmpty {
         addString("placeholder", placeholder, skipIfEmpty: false)
     }
     if node.hasFocus {
@@ -211,4 +211,11 @@ private func formatSnapshotValue(_ value: JSONValue) -> String {
     case .null:
         return "null"
     }
+}
+
+private func isEmptyStringValue(_ value: JSONValue) -> Bool {
+    if case let .string(string) = value {
+        return string.isEmpty
+    }
+    return false
 }
