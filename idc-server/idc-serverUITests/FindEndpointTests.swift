@@ -62,6 +62,20 @@ final class FindEndpointTests: XCTestCase {
         XCTAssertEqual(response.truncated, false)
     }
 
+    func testFindEmptyBodyError() async throws {
+        let (data, http) = try await postFindRaw(body: Data())
+        XCTAssertEqual(http.statusCode, 400)
+        let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
+        XCTAssertTrue(error.error.lowercased().contains("empty"))
+    }
+
+    func testFindInvalidJSONError() async throws {
+        let (data, http) = try await postFindRaw(body: Data("{".utf8))
+        XCTAssertEqual(http.statusCode, 400)
+        let error = try JSONDecoder().decode(ErrorResponse.self, from: data)
+        XCTAssertTrue(error.error.contains("Invalid JSON"))
+    }
+
     private func plan(_ ops: ExecutionOp...) -> ExecutionPlan {
         ExecutionPlan(pipeline: ops)
     }
@@ -74,12 +88,16 @@ final class FindEndpointTests: XCTestCase {
     }
 
     private func postFindRaw(plan: ExecutionPlan, limit: Int) async throws -> (Data, HTTPURLResponse) {
+        let body = FindRequest(plan: plan, limit: limit)
+        return try await postFindRaw(body: try JSONEncoder().encode(body))
+    }
+
+    private func postFindRaw(body: Data?) async throws -> (Data, HTTPURLResponse) {
         let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/find"))
         var request = URLRequest(url: url)
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-        let body = FindRequest(plan: plan, limit: limit)
-        request.httpBody = try JSONEncoder().encode(body)
+        request.httpBody = body
         let (data, response) = try await URLSession.shared.data(for: request)
         let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
         return (data, httpResponse)
