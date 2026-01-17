@@ -36,12 +36,7 @@ struct TestFixtureView: View {
                 FixtureBackground()
                 ScrollView {
                     VStack(spacing: 16) {
-                        FixtureHeader(
-                            title: "Controls",
-                            subtitle: "Tap, toggle, and selection states"
-                        )
-
-                        FixtureCard(title: "Tap Counter", subtitle: "Primary interaction") {
+                        FixtureCard(title: "Tap Counter") {
                             HStack(alignment: .center) {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text("Tap Count: \(tapCount)")
@@ -77,18 +72,21 @@ struct TestFixtureView: View {
                             }
                         }
 
-                        FixtureCard(title: "Buttons", subtitle: "Primary / secondary / disabled") {
-                            VStack(spacing: 8) {
+                        FixtureCard(title: "Buttons") {
+                            HStack(spacing: 8) {
                                 Button("Primary") {}
                                     .buttonStyle(.borderedProminent)
+                                    .frame(maxWidth: .infinity)
                                     .accessibilityIdentifier("primary-button")
 
                                 Button("Secondary") {}
                                     .buttonStyle(.bordered)
+                                    .frame(maxWidth: .infinity)
                                     .accessibilityIdentifier("secondary-button")
 
                                 Button("Disabled") {}
                                     .buttonStyle(.bordered)
+                                    .frame(maxWidth: .infinity)
                                     .disabled(true)
                                     .accessibilityIdentifier("disabled-button")
                             }
@@ -96,7 +94,7 @@ struct TestFixtureView: View {
                         .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("button-group")
 
-                        FixtureCard(title: "Inline Row", subtitle: "HStack layout") {
+                        FixtureCard(title: "Inline Row") {
                             HStack(spacing: 12) {
                                 Text("Left")
                                     .font(.callout.weight(.medium))
@@ -110,7 +108,7 @@ struct TestFixtureView: View {
                         .accessibilityElement(children: .contain)
                         .accessibilityIdentifier("row-container")
 
-                        FixtureCard(title: "Switches", subtitle: "Stateful toggles") {
+                        FixtureCard(title: "Switches") {
                             Toggle("Feature Enabled", isOn: $featureEnabled)
                                 .disabled(true)
                                 .accessibilityIdentifier("feature-toggle")
@@ -122,10 +120,15 @@ struct TestFixtureView: View {
                                 .font(.callout.weight(.semibold))
                                 .accessibilityIdentifier("notifications-state")
 
-                            DisabledSwitchView(label: "Disabled Switch", identifier: "disabled-switch")
+                            HStack {
+                                Text("UIKit Disabled Switch")
+                                    .font(.callout)
+                                Spacer()
+                                DisabledSwitchView(label: "Disabled Switch", identifier: "disabled-switch")
+                            }
                         }
 
-                        FixtureCard(title: "Selection", subtitle: "Segmented, slider, stepper") {
+                        FixtureCard(title: "Selection") {
                             Picker("Mode", selection: $modeSelection) {
                                 Text("Standard").tag(0)
                                 Text("Focus").tag(1)
@@ -153,7 +156,7 @@ struct TestFixtureView: View {
                     .accessibilityIdentifier("fixture-root")
                 }
             }
-            .navigationTitle("Controls")
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tabItem {
             Label("Controls", systemImage: "slider.horizontal.3")
@@ -166,12 +169,7 @@ struct TestFixtureView: View {
                 FixtureBackground(variant: .inputs)
                 ScrollView {
                     VStack(spacing: 16) {
-                        FixtureHeader(
-                            title: "Inputs",
-                            subtitle: "Text entry and UIKit bridged label"
-                        )
-
-                        FixtureCard(title: "Contact", subtitle: "Editable fields") {
+                        FixtureCard(title: "Contact") {
                             TextField("Email", text: $email)
                                 .textFieldStyle(.roundedBorder)
                                 .accessibilityIdentifier("email-field")
@@ -181,7 +179,7 @@ struct TestFixtureView: View {
                                 .accessibilityIdentifier("password-field")
                         }
 
-                        FixtureCard(title: "Notes", subtitle: "Multiline editor") {
+                        FixtureCard(title: "Notes") {
                             TextEditor(text: $notes)
                                 .frame(minHeight: 120)
                                 .padding(8)
@@ -196,7 +194,7 @@ struct TestFixtureView: View {
                                 .accessibilityIdentifier("notes-editor")
                         }
 
-                        FixtureCard(title: "UIKit Label", subtitle: "UIViewRepresentable") {
+                        FixtureCard(title: "UIKit Label") {
                             FixtureLabelView(text: "Fixture Label", identifier: "fixture-label")
                                 .frame(maxWidth: .infinity, alignment: .leading)
                         }
@@ -205,7 +203,7 @@ struct TestFixtureView: View {
                     .padding(.bottom, 28)
                 }
             }
-            .navigationTitle("Inputs")
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tabItem {
             Label("Inputs", systemImage: "rectangle.and.pencil.and.ellipsis")
@@ -218,12 +216,7 @@ struct TestFixtureView: View {
                 FixtureBackground(variant: .pickers)
                 ScrollView {
                     VStack(spacing: 16) {
-                        FixtureHeader(
-                            title: "Pickers",
-                            subtitle: "Menu, wheel, date, and color"
-                        )
-
-                        FixtureCard(title: "Menu Picker", subtitle: "Frequency") {
+                        FixtureCard(title: "Menu Picker") {
                             Picker("Frequency", selection: $menuSelection) {
                                 Text("Daily").tag("Daily")
                                 Text("Weekly").tag("Weekly")
@@ -232,7 +225,7 @@ struct TestFixtureView: View {
                             .pickerStyle(.menu)
                         }
 
-                        FixtureCard(title: "Wheel Picker", subtitle: "Levels") {
+                        FixtureCard(title: "Wheel Picker") {
                             Picker("Level", selection: $wheelSelection) {
                                 Text("One").tag("One")
                                 Text("Two").tag("Two")
@@ -242,7 +235,7 @@ struct TestFixtureView: View {
                             .frame(height: 120)
                         }
 
-                        FixtureCard(title: "Date & Color", subtitle: "Scheduling") {
+                        FixtureCard(title: "Date & Color") {
                             DatePicker("Schedule", selection: $scheduledDate, displayedComponents: [.date, .hourAndMinute])
                                 .datePickerStyle(.compact)
 
@@ -253,7 +246,7 @@ struct TestFixtureView: View {
                     .padding(.bottom, 28)
                 }
             }
-            .navigationTitle("Pickers")
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tabItem {
             Label("Pickers", systemImage: "dial.medium")
@@ -285,7 +278,7 @@ struct TestFixtureView: View {
                 }
             }
             .listStyle(.insetGrouped)
-            .navigationTitle("Lists")
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tabItem {
             Label("Lists", systemImage: "list.bullet.rectangle")
@@ -298,17 +291,12 @@ struct TestFixtureView: View {
                 FixtureBackground(variant: .feedback)
                 ScrollView {
                     VStack(spacing: 16) {
-                        FixtureHeader(
-                            title: "Feedback",
-                            subtitle: "Progress and system dialogs"
-                        )
-
-                        FixtureCard(title: "Progress", subtitle: "Determinate and indeterminate") {
+                        FixtureCard(title: "Progress") {
                             ProgressView(value: progressValue)
                             ProgressView("Loading")
                         }
 
-                        FixtureCard(title: "Dialogs", subtitle: "Alert, confirmation, sheet") {
+                        FixtureCard(title: "Dialogs") {
                             HStack(spacing: 12) {
                                 Button("Alert") {
                                     showAlert = true
@@ -331,7 +319,7 @@ struct TestFixtureView: View {
                     .padding(.bottom, 28)
                 }
             }
-            .navigationTitle("Feedback")
+            .toolbar(.hidden, for: .navigationBar)
         }
         .tabItem {
             Label("Feedback", systemImage: "sparkles")
@@ -363,10 +351,10 @@ struct TestFixtureView: View {
 
 struct FixtureCard<Content: View>: View {
     let title: String
-    let subtitle: String
+    let subtitle: String?
     let content: Content
 
-    init(title: String, subtitle: String, @ViewBuilder content: () -> Content) {
+    init(title: String, subtitle: String? = nil, @ViewBuilder content: () -> Content) {
         self.title = title
         self.subtitle = subtitle
         self.content = content()
@@ -377,9 +365,11 @@ struct FixtureCard<Content: View>: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(title)
                     .font(.system(.title3, design: .rounded).weight(.semibold))
-                Text(subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
+                if let subtitle, !subtitle.isEmpty {
+                    Text(subtitle)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
             }
             content
         }
@@ -394,24 +384,6 @@ struct FixtureCard<Content: View>: View {
                 .stroke(Color.black.opacity(0.06), lineWidth: 1)
         )
         .shadow(color: Color.black.opacity(0.08), radius: 10, x: 0, y: 6)
-    }
-}
-
-struct FixtureHeader: View {
-    let title: String
-    let subtitle: String
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            Text(title)
-                .font(.system(.largeTitle, design: .rounded).weight(.bold))
-            Text(subtitle)
-                .font(.callout)
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, alignment: .leading)
-        .padding(.horizontal, 4)
-        .padding(.top, 12)
     }
 }
 
