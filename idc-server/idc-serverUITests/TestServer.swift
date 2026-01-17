@@ -165,6 +165,32 @@ actor TestServer {
                 )
             }
         }
+        await server.appendRoute("/find", for: [.POST]) { request in
+            do {
+                let findRequest = try JSONDecoder().decode(FindRequest.self, from: await request.bodyData)
+                let response = try await resolveFindRequest(findRequest)
+                let body = try JSONEncoder().encode(response)
+                return HTTPResponse(
+                    statusCode: .ok,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            } catch let error as PlanError {
+                let body = try JSONEncoder().encode(ErrorResponse(error: error.localizedDescription))
+                return HTTPResponse(
+                    statusCode: .badRequest,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            } catch {
+                let body = try JSONEncoder().encode(ErrorResponse(error: error.localizedDescription))
+                return HTTPResponse(
+                    statusCode: .internalServerError,
+                    headers: [.contentType: "application/json"],
+                    body: body
+                )
+            }
+        }
         await server.appendRoute("/stop", for: [.POST]) { _ in
             Task { await self.stop() }
             let body = try JSONEncoder().encode(HealthResponse(status: "stopping"))
@@ -208,6 +234,40 @@ private func resolveTapRequest(_ tapRequest: TapRequest) async throws -> TapResp
         }
     }
     throw lastError ?? PlanError.noMatches
+}
+
+private func resolveFindRequest(_ findRequest: FindRequest) async throws -> FindResponse {
+    let executor = PlanExecutor()
+    let limit = findRequest.limit ?? 20
+    guard limit > 0 else {
+        throw PlanError.invalidPlan("Limit must be greater than 0.")
+    }
+    guard let plan = findRequest.plan, !plan.pipeline.isEmpty else {
+        throw PlanError.invalidPlan("Missing selector.")
+    }
+    return try await MainActor.run {
+        guard let app = RunningApp.getForegroundApp() else {
+            throw PlanError.invalidPlan("No foreground app found.")
+        }
+        let node = try executor.resolveNode(plan, from: app)
+        switch node {
+        case let .element(element):
+            guard element.exists else {
+                return FindResponse(matches: [], truncated: false)
+            }
+            return FindResponse(matches: [FindElement(from: element)], truncated: false)
+        case let .query(query):
+            var matches: [FindElement] = []
+            matches.reserveCapacity(limit)
+            for index in 0 ..< limit {
+                let element = query.element(boundBy: index)
+                guard element.exists else { break }
+                matches.append(FindElement(from: element))
+            }
+            let extraExists = query.element(boundBy: limit).exists
+            return FindResponse(matches: matches, truncated: extraExists)
+        }
+    }
 }
 
 private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapPoint?) throws {

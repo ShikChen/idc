@@ -58,15 +58,7 @@ struct PlanExecutor {
         guard let plan, !plan.pipeline.isEmpty else {
             return root
         }
-        guard plan.version == 3 else {
-            throw PlanError.invalidPlan("Unsupported plan version: \(plan.version)")
-        }
-
-        var node: PlanNode = .element(root)
-
-        for op in plan.pipeline {
-            node = try apply(op, to: node)
-        }
+        let node = try resolveNode(plan, from: root)
 
         switch node {
         case let .element(element):
@@ -76,6 +68,17 @@ struct PlanExecutor {
             guard first.exists else { throw PlanError.noMatches }
             return first
         }
+    }
+
+    func resolveNode(_ plan: ExecutionPlan, from root: XCUIElement) throws -> PlanNode {
+        guard plan.version == 3 else {
+            throw PlanError.invalidPlan("Unsupported plan version: \(plan.version)")
+        }
+        var node: PlanNode = .element(root)
+        for op in plan.pipeline {
+            node = try apply(op, to: node)
+        }
+        return node
     }
 
     private func apply(_ op: ExecutionOp, to node: PlanNode) throws -> PlanNode {
