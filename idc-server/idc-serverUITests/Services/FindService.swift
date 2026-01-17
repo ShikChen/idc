@@ -20,14 +20,16 @@ struct FindService {
                 guard element.exists else {
                     return FindResponse(matches: [], truncated: false)
                 }
-                return FindResponse(matches: [FindElement(from: element)], truncated: false)
+                let snapshot = try element.snapshot()
+                return FindResponse(matches: [FindElement(from: snapshot)], truncated: false)
             case let .query(query):
                 var matches: [FindElement] = []
                 matches.reserveCapacity(limit)
                 for index in 0 ..< limit {
                     let element = query.element(boundBy: index)
                     guard element.exists else { break }
-                    matches.append(FindElement(from: element))
+                    let snapshot = try element.snapshot()
+                    matches.append(FindElement(from: snapshot))
                 }
                 let extraExists = query.element(boundBy: limit).exists
                 return FindResponse(matches: matches, truncated: extraExists)

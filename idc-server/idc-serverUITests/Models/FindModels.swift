@@ -35,4 +35,17 @@ struct FindElement: Codable {
         isSelected = element.isSelected
         frame = Frame(element.frame)
     }
+
+    init(from snapshot: XCUIElementSnapshot) {
+        identifier = snapshot.identifier
+        elementType = elementTypeName(snapshot.elementType)
+        value = JSONValue.fromAny(snapshot.value)
+        placeholderValue = snapshot.placeholderValue
+        title = snapshot.title
+        label = snapshot.label
+        hasFocus = snapshot.hasFocus
+        isEnabled = snapshot.isEnabled
+        isSelected = snapshot.isSelected
+        frame = Frame(snapshot.frame)
+    }
 }
