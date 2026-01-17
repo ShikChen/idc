@@ -49,7 +49,7 @@ final class ServerEndpointsTests: XCTestCase {
         let appState = await MainActor.run {
             let app = XCUIApplication()
             app.launch()
-            let tab = app.tabBars.buttons["Test"]
+            let tab = app.tabBars.buttons["Controls"]
             if tab.waitForExistence(timeout: 5) {
                 tab.tap()
             }

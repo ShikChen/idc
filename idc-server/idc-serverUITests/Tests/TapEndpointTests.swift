@@ -7,7 +7,7 @@ final class TapEndpointTests: XCTestCase {
         continueAfterFailure = false
         try await TestHelpers.startServer(Self.server)
         try await TestHelpers.launchOrActivateApp()
-        try await TestHelpers.switchToTestTab()
+        try await TestHelpers.switchToTab("Controls")
         try await TestHelpers.resetTapCount()
         try await TestHelpers.waitForForegroundFixture()
     }
@@ -19,7 +19,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapByIdentifier() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("Tap Me")
+            .matchIdentifier("tap-button")
         )
         try await assertTapCount("Tap Count: 0")
         let (response, _) = try await postTap(plan)
@@ -30,7 +30,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapDescendantCombinator() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("root"),
+            .matchIdentifier("fixture-root"),
             .descendants(type: "button"),
             .matchPredicate(format: "label == %@", args: [TestHelpers.arg("Primary")])
         )
@@ -41,7 +41,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapChildCombinator() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("root"),
+            .matchIdentifier("fixture-root"),
             .children(type: "any"),
             .matchIdentifier("button-group")
         )
@@ -52,30 +52,30 @@ final class TapEndpointTests: XCTestCase {
     func testTapHasTypeAndIdentifier() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("root"),
-            .containTypeIdentifier(type: "button", value: "Secondary")
+            .matchIdentifier("fixture-root"),
+            .containTypeIdentifier(type: "button", value: "secondary-button")
         )
         let (response, _) = try await postTap(plan)
-        XCTAssertEqual(response.selected?.identifier, "root")
+        XCTAssertEqual(response.selected?.identifier, "fixture-root")
     }
 
     func testTapHasPredicate() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("root"),
+            .matchIdentifier("fixture-root"),
             .containPredicate(
                 format: "(elementType == %@) AND (label == %@)",
                 args: [TestHelpers.typeArg("button"), TestHelpers.arg("Secondary")]
             )
         )
         let (response, _) = try await postTap(plan)
-        XCTAssertEqual(response.selected?.identifier, "root")
+        XCTAssertEqual(response.selected?.identifier, "fixture-root")
     }
 
     func testTapMatchTypeIdentifier() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchTypeIdentifier(type: "button", value: "Primary")
+            .matchTypeIdentifier(type: "button", value: "primary-button")
         )
         let (response, _) = try await postTap(plan)
         XCTAssertEqual(response.selected?.label, "Primary")
@@ -96,7 +96,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapPredicateNot() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("root"),
+            .matchIdentifier("fixture-root"),
             .descendants(type: "button"),
             .matchPredicate(format: "NOT (label == %@)", args: [TestHelpers.arg("Secondary")])
         )
@@ -143,13 +143,13 @@ final class TapEndpointTests: XCTestCase {
     func testTapPickIndex() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchTypeIdentifier(type: "other", value: "root"),
+            .matchTypeIdentifier(type: "other", value: "fixture-root"),
             .descendants(type: "button"),
             .pickIndex(1)
         )
         let (exists, expectedLabel) = await MainActor.run {
             let app = XCUIApplication()
-            let root = app.otherElements["root"]
+            let root = app.otherElements["fixture-root"]
             let element = root.descendants(matching: .button).element(boundBy: 1)
             return (element.exists, element.label)
         }
@@ -159,6 +159,7 @@ final class TapEndpointTests: XCTestCase {
     }
 
     func testTapPlaceholderValue() async throws {
+        try await TestHelpers.switchToTab("Inputs")
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
             .matchPredicate(format: "placeholderValue == %@", args: [TestHelpers.arg("Email")])
@@ -168,6 +169,7 @@ final class TapEndpointTests: XCTestCase {
     }
 
     func testTapValue() async throws {
+        try await TestHelpers.switchToTab("Inputs")
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
             .matchPredicate(format: "value == %@", args: [TestHelpers.arg("hello")])
@@ -179,7 +181,7 @@ final class TapEndpointTests: XCTestCase {
     func testTapDisabled() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("Disabled"),
+            .matchIdentifier("disabled-button"),
             .matchPredicate(format: "isEnabled == %@", args: [TestHelpers.arg(false)])
         )
         let (response, _) = try await postTap(plan)
@@ -189,17 +191,19 @@ final class TapEndpointTests: XCTestCase {
     func testTapSelectedIsSelectedKey() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "button"),
-            .matchIdentifier("Test"),
-            .matchPredicate(format: "isSelected == %@", args: [TestHelpers.arg(true)])
+            .matchPredicate(
+                format: "(label == %@) AND (isSelected == %@)",
+                args: [TestHelpers.arg("Standard"), TestHelpers.arg(true)]
+            )
         )
         let (response, _) = try await postTap(plan)
-        XCTAssertEqual(response.selected?.label, "Test")
+        XCTAssertEqual(response.selected?.label, "Standard")
     }
 
     func testTapHasFocusKey() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("Tap Me"),
+            .matchIdentifier("tap-button"),
             .matchPredicate(format: "hasFocus == %@", args: [TestHelpers.arg(false)])
         )
         let (response, _) = try await postTap(plan)

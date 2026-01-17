@@ -60,10 +60,10 @@ enum TestHelpers {
         XCTAssertTrue(isRunning)
     }
 
-    static func switchToTestTab() async throws {
+    static func switchToTab(_ label: String) async throws {
         await MainActor.run {
             let app = XCUIApplication()
-            let tab = app.tabBars.buttons["Test"]
+            let tab = app.tabBars.buttons[label]
             XCTAssertTrue(tab.waitForExistence(timeout: 5))
             tab.tap()
         }

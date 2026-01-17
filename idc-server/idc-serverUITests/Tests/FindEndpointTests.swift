@@ -7,7 +7,7 @@ final class FindEndpointTests: XCTestCase {
         continueAfterFailure = false
         try await TestHelpers.startServer(Self.server)
         try await TestHelpers.launchOrActivateApp()
-        try await TestHelpers.switchToTestTab()
+        try await TestHelpers.switchToTab("Controls")
         try await TestHelpers.waitForForegroundFixture()
     }
 
@@ -18,7 +18,7 @@ final class FindEndpointTests: XCTestCase {
     func testFindByIdentifier() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "any"),
-            .matchIdentifier("Tap Me")
+            .matchIdentifier("tap-button")
         )
         let (response, http) = try await postFind(plan: plan, limit: 20)
         XCTAssertEqual(http.statusCode, 200)
