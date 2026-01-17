@@ -28,4 +28,4 @@
 - [x] 將 `TestServer.swift` 移到 `Server/`
 - [x] 建立 `Models/`（攤平）
 - [x] ObjC bridge 放到 `Infrastructure/ObjC/`（AXClientProxy、XCTestDaemonsProxy 等）
-- [ ] 測試 helper 抽到 `Tests/Helpers/`（共用 plan builder、waitForForegroundFixture 等）
+- [x] 測試 helper 抽到 `Tests/TestHelpers.swift`（共用 plan builder、waitForForegroundFixture 等）

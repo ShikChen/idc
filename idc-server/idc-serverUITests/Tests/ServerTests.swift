@@ -12,32 +12,28 @@ final class ServerEndpointsTests: XCTestCase {
 
     override func setUp() async throws {
         continueAfterFailure = false
-        try await Self.server.start()
+        try await TestHelpers.startServer(Self.server)
     }
 
     override func tearDown() async throws {
-        await Self.server.stop()
+        await TestHelpers.stopServer(Self.server)
     }
 
     func testHealth() async throws {
-        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/health"))
-        let (data, response) = try await URLSession.shared.data(from: url)
-        let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
+        let (data, httpResponse) = try await TestHelpers.get("health")
 
         XCTAssertEqual(httpResponse.statusCode, 200)
 
-        let payload = try JSONDecoder().decode(HealthResponse.self, from: data)
+        let payload = try TestHelpers.decode(HealthResponse.self, from: data)
         XCTAssertEqual(payload.status, "ok")
     }
 
     func testInfo() async throws {
-        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/info"))
-        let (data, response) = try await URLSession.shared.data(from: url)
-        let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
+        let (data, httpResponse) = try await TestHelpers.get("info")
 
         XCTAssertEqual(httpResponse.statusCode, 200)
 
-        let info = try JSONDecoder().decode(InfoResponse.self, from: data)
+        let info = try TestHelpers.decode(InfoResponse.self, from: data)
         XCTAssertFalse(info.name.isEmpty)
         XCTAssertFalse(info.model.isEmpty)
         XCTAssertFalse(info.os_version.isEmpty)
@@ -61,13 +57,11 @@ final class ServerEndpointsTests: XCTestCase {
         }
         XCTAssertEqual(appState, .runningForeground)
 
-        let url = try XCTUnwrap(URL(string: "http://127.0.0.1:\(TestServer.defaultPort)/snapshot"))
-        let (data, response) = try await URLSession.shared.data(from: url)
-        let httpResponse = try XCTUnwrap(response as? HTTPURLResponse)
+        let (data, httpResponse) = try await TestHelpers.get("snapshot")
 
         XCTAssertEqual(httpResponse.statusCode, 200)
 
-        let payload = try JSONDecoder().decode(SnapshotResponse.self, from: data)
+        let payload = try TestHelpers.decode(SnapshotResponse.self, from: data)
         XCTAssertFalse(payload.root.elementType.isEmpty)
         XCTAssertGreaterThanOrEqual(payload.root.frame.width, 0)
         XCTAssertGreaterThanOrEqual(payload.root.frame.height, 0)
