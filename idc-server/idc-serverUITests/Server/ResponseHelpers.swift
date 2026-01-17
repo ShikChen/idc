@@ -55,7 +55,7 @@ func handleJSONRequest<T: Decodable, R: Encodable>(
 }
 
 private func decodeJSONBody<T: Decodable>(_ request: HTTPRequest) async throws -> T {
-    let data = await request.bodyData
+    let data = try await request.bodyData
     guard !data.isEmpty else {
         throw RequestDecodingError.emptyBody
     }
