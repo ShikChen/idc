@@ -27,6 +27,18 @@ final class FindEndpointTests: XCTestCase {
         XCTAssertEqual(response.truncated, false)
     }
 
+    func testFindByIdentifierLive() async throws {
+        let plan = TestHelpers.plan(
+            .descendants(type: "any"),
+            .matchIdentifier("tap-button")
+        )
+        let (response, http) = try await postFind(plan: plan, limit: 20, live: true)
+        XCTAssertEqual(http.statusCode, 200)
+        XCTAssertEqual(response.matches.count, 1)
+        XCTAssertEqual(response.matches.first?.label, "Tap Me")
+        XCTAssertEqual(response.truncated, false)
+    }
+
     func testFindLimitTruncates() async throws {
         let plan = TestHelpers.plan(
             .descendants(type: "button")
@@ -58,15 +70,15 @@ final class FindEndpointTests: XCTestCase {
         try TestHelpers.assertBadRequest(http, data: data, contains: "Invalid JSON")
     }
 
-    private func postFind(plan: ExecutionPlan, limit: Int) async throws -> (FindResponse, HTTPURLResponse) {
-        let (data, response) = try await postFindRaw(plan: plan, limit: limit)
+    private func postFind(plan: ExecutionPlan, limit: Int, live: Bool? = nil) async throws -> (FindResponse, HTTPURLResponse) {
+        let (data, response) = try await postFindRaw(plan: plan, limit: limit, live: live)
         let httpResponse = response
         let payload = try TestHelpers.decode(FindResponse.self, from: data)
         return (payload, httpResponse)
     }
 
-    private func postFindRaw(plan: ExecutionPlan, limit: Int) async throws -> (Data, HTTPURLResponse) {
-        let body = FindRequest(plan: plan, limit: limit)
+    private func postFindRaw(plan: ExecutionPlan, limit: Int, live: Bool? = nil) async throws -> (Data, HTTPURLResponse) {
+        let body = FindRequest(plan: plan, limit: limit, live: live)
         return try await postFindRaw(body: try JSONEncoder().encode(body))
     }
 

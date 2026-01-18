@@ -15,6 +15,9 @@ struct Find: AsyncParsableCommand {
     @Flag(name: .long, help: "Output raw JSON.")
     var json: Bool = false
 
+    @Flag(name: .long, help: "Use live query (slower, reflects current UI state).")
+    var live: Bool = false
+
     @Option(name: .long, help: "Expected simulator UDID (optional).")
     var udid: String?
 
@@ -43,7 +46,7 @@ struct Find: AsyncParsableCommand {
 
         try await validateUDID(udid, timeout: timeout)
 
-        let request = FindRequest(plan: plan, limit: limit)
+        let request = FindRequest(plan: plan, limit: limit, live: live ? true : nil)
         let (data, response) = try await postJSON(path: "/find", body: request, timeout: timeout)
         guard response.statusCode == 200 else {
             if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
@@ -70,6 +73,7 @@ struct Find: AsyncParsableCommand {
 struct FindRequest: Encodable {
     let plan: ExecutionPlan
     let limit: Int
+    let live: Bool?
 }
 
 struct FindResponse: Decodable {

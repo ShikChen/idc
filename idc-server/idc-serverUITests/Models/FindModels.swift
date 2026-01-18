@@ -4,6 +4,7 @@ import XCTest
 struct FindRequest: Codable {
     let plan: ExecutionPlan?
     let limit: Int?
+    let live: Bool?
 }
 
 struct FindResponse: Codable {
