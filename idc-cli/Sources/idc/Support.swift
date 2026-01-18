@@ -5,6 +5,10 @@ struct InfoResponse: Decodable {
     let udid: String?
 }
 
+struct ErrorResponse: Decodable {
+    let error: String
+}
+
 func serverUnreachableError(_ error: Error) -> ValidationError {
     ValidationError("Unable to reach idc-server. Run `idc server start`. (\(error.localizedDescription))")
 }
@@ -51,5 +55,16 @@ func postJSON<T: Encodable>(path: String, body: T, timeout: TimeInterval) async 
         return (data, httpResponse)
     } catch {
         throw serverUnreachableError(error)
+    }
+}
+
+func openAppViaServer(bundleId: String, wait: Double, timeout: TimeInterval) async throws {
+    let request = AppOpenRequest(bundleId: bundleId, wait: wait)
+    let (data, response) = try await postJSON(path: "/app/open", body: request, timeout: timeout)
+    guard response.statusCode == 200 else {
+        if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+            throw ValidationError(error.error)
+        }
+        throw ValidationError("App open failed with HTTP \(response.statusCode).")
     }
 }

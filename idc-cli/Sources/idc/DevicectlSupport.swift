@@ -62,7 +62,7 @@ private struct DevicectlLocalizedDescription: Decodable {
     let string: String?
 }
 
-func listDeviceApps(deviceId: String) async throws -> [SimctlAppInfo] {
+func listDeviceApps(deviceId: String) async throws -> [InstalledApp] {
     let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
         "devicectl-\(UUID().uuidString)",
         isDirectory: true
@@ -102,16 +102,77 @@ func listDeviceApps(deviceId: String) async throws -> [SimctlAppInfo] {
         throw ValidationError("Unexpected devicectl app list output.")
     }
 
-    let mapped = apps.compactMap { app -> SimctlAppInfo? in
+    let mapped = apps.compactMap { app -> InstalledApp? in
         guard let bundleId = app.bundleIdentifier ?? app.bundleID else {
             return nil
         }
         let version = app.version ?? app.bundleVersion
         let type = mapDevicectlAppType(app)
-        return SimctlAppInfo(bundleId: bundleId, name: app.name, version: version, type: type)
+        return InstalledApp(bundleId: bundleId, name: app.name, version: version, type: type)
     }
 
     return mapped.sorted { $0.bundleId.localizedStandardCompare($1.bundleId) == .orderedAscending }
+}
+
+func listConnectedDevices() async throws -> [RealDeviceInfo] {
+    let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "devicectl-\(UUID().uuidString)",
+        isDirectory: true
+    )
+    try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: tempDir) }
+
+    let outputURL = tempDir.appendingPathComponent("devices.json")
+    _ = try await runCommand(
+        "xcrun",
+        [
+            "devicectl",
+            "list",
+            "devices",
+            "--json-output",
+            outputURL.path,
+        ]
+    )
+
+    guard let data = try? Data(contentsOf: outputURL) else {
+        throw ValidationError("Unable to read devicectl JSON output.")
+    }
+
+    let response = try JSONDecoder().decode(DevicectlDevicesResponse.self, from: data)
+    if response.info?.outcome == "failed" {
+        if let message = response.error?.userInfo?.localizedDescription?.string, !message.isEmpty {
+            throw ValidationError(message)
+        }
+        throw ValidationError("devicectl reported a failure.")
+    }
+
+    guard let devices = response.result?.devices else {
+        throw ValidationError("Unexpected devicectl devices output.")
+    }
+
+    let mapped = devices.compactMap { device -> RealDeviceInfo? in
+        guard let hardware = device.hardwareProperties else {
+            return nil
+        }
+        guard isPhonePadDevice(platform: hardware.platform, deviceType: hardware.deviceType) else {
+            return nil
+        }
+        guard let udid = hardware.udid else {
+            return nil
+        }
+        let name = device.deviceProperties?.name
+        return RealDeviceInfo(udid: udid, name: name)
+    }
+
+    return mapped.sorted { lhs, rhs in
+        (lhs.name ?? lhs.udid).localizedStandardCompare(rhs.name ?? rhs.udid) == .orderedAscending
+    }
+}
+
+func findConnectedDevice(udid: String) async throws -> RealDeviceInfo? {
+    let devices = try await listConnectedDevices()
+    let needle = udid.lowercased()
+    return devices.first(where: { $0.udid.lowercased() == needle })
 }
 
 func openDeviceApp(deviceId: String, bundleId: String, wait: Double) async throws {
@@ -170,4 +231,36 @@ private func mapDevicectlAppType(_ app: DevicectlApp) -> String? {
         return "System"
     }
     return nil
+}
+
+private struct DevicectlDevicesResponse: Decodable {
+    let info: DevicectlInfo?
+    let result: DevicectlDevicesResult?
+    let error: DevicectlError?
+}
+
+private struct DevicectlDevicesResult: Decodable {
+    let devices: [DevicectlDevice]?
+}
+
+private struct DevicectlDevice: Decodable {
+    let hardwareProperties: DevicectlHardwareProperties?
+    let deviceProperties: DevicectlDeviceProperties?
+}
+
+private struct DevicectlHardwareProperties: Decodable {
+    let deviceType: String?
+    let platform: String?
+    let udid: String?
+}
+
+private struct DevicectlDeviceProperties: Decodable {
+    let name: String?
+}
+
+private func isPhonePadDevice(platform: String?, deviceType: String?) -> Bool {
+    guard let platform else { return false }
+    guard platform.lowercased() == "ios" else { return false }
+    let type = deviceType?.lowercased()
+    return type == "iphone" || type == "ipad"
 }

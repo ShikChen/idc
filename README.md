@@ -90,34 +90,34 @@ POST /element/{id}/tap
 ```bash
 # 設備管理
 idc devices list [--json]
-idc devices boot [--udid <udid>]
-idc devices shutdown [--udid <udid>]
+idc devices boot [--device auto|simulator|device|<udid>]
+idc devices shutdown [--device auto|simulator|device|<udid>]
 
 # 伺服器管理
-idc server deploy [--udid <udid>]
-idc server status [--udid <udid>]
+idc server deploy [--device auto|simulator|device|<udid>]
+idc server status [--device auto|simulator|device|<udid>]
 
 # App 管理
-idc app install <path> [--udid <udid>]
-idc app launch <bundle-id> [--udid <udid>]
-idc app terminate <bundle-id> [--udid <udid>]
+idc app install <path> [--device auto|simulator|device|<udid>]
+idc app launch <bundle-id> [--device auto|simulator|device|<udid>]
+idc app terminate <bundle-id> [--device auto|simulator|device|<udid>]
 
 # UI 自動化（需要 idc-server 運行）
-idc ui screenshot [-o file] [--udid <udid>]
-idc ui tap <x> <y> [--udid <udid>]
-idc ui swipe <x1> <y1> <x2> <y2> [--udid <udid>]
-idc ui input <text> [--udid <udid>]
-idc snapshot [--json] [--udid <udid>]
+idc ui screenshot [-o file] [--device auto|simulator|device|<udid>]
+idc ui tap <x> <y> [--device auto|simulator|device|<udid>]
+idc ui swipe <x1> <y1> <x2> <y2> [--device auto|simulator|device|<udid>]
+idc ui input <text> [--device auto|simulator|device|<udid>]
+idc snapshot [--json] [--device auto|simulator|device|<udid>]
 
 # 系統功能
-idc system openurl <url> [--udid <udid>]
-idc system location <lat> <lon> [--udid <udid>]
+idc system openurl <url> [--device auto|simulator|device|<udid>]
+idc system location <lat> <lon> [--device auto|simulator|device|<udid>]
 ```
 
 ### 設備選擇策略
 
-- 如果只有一台設備，自動使用（不需指定 `--udid`）
-- 如果有多台設備，提示選擇或用 `--udid` 指定
+- 預設 `--device auto`：只有一台可用裝置時自動使用
+- 多台時需指定 `--device simulator` / `--device device` 或明確 `--device <udid>`
 
 ---
 

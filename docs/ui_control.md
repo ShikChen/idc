@@ -306,7 +306,7 @@ The server executes the plan without re-parsing DSL semantics.
 ### Syntax
 
 ```
-idc tap <selector?> [--at <point>] [--udid <udid>] [--timeout <seconds>]
+idc tap <selector?> [--at <point>] [--device auto|simulator|device|<udid>] [--timeout <seconds>]
 ```
 
 - `<selector?>` is optional. If omitted, `--at` is required.

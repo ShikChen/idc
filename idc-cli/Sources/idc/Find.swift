@@ -18,8 +18,8 @@ struct Find: AsyncParsableCommand {
     @Flag(name: .long, help: "Use live query (slower, reflects current UI state).")
     var live: Bool = false
 
-    @Option(name: .long, help: "Expected simulator UDID (optional).")
-    var udid: String?
+    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")
     var timeout: Double = 5
@@ -44,7 +44,9 @@ struct Find: AsyncParsableCommand {
             throw ValidationError(error.description)
         }
 
-        try await validateUDID(udid, timeout: timeout)
+        let target = try await DeviceResolver.resolve(device, allowedKinds: [.simulator])
+        let simulator = try target.requireSimulator()
+        try await simulator.validateServer(timeout: timeout)
 
         let request = FindRequest(plan: plan, limit: limit, live: live ? true : nil)
         let (data, response) = try await postJSON(path: "/find", body: request, timeout: timeout)

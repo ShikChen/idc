@@ -7,13 +7,16 @@ struct ServerHealth: AsyncParsableCommand {
         abstract: "Check idc-server health on localhost:8080"
     )
 
-    @Option(name: .long, help: "Expected simulator UDID (optional).")
-    var udid: String?
+    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")
     var timeout: Double = 3
 
     mutating func run() async throws {
+        let target = try await DeviceResolver.resolve(device, allowedKinds: [.simulator])
+        let simulator = try target.requireSimulator()
+
         let health: HealthResponse = try await fetchJSON(
             path: "/health",
             timeout: timeout
@@ -23,7 +26,7 @@ struct ServerHealth: AsyncParsableCommand {
             throw ValidationError("Server unhealthy: \(health.status)")
         }
 
-        try await validateUDID(udid, timeout: timeout)
+        try await simulator.validateServer(timeout: timeout)
 
         print("ok")
     }

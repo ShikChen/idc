@@ -9,10 +9,17 @@ struct Screenshot: AsyncParsableCommand {
     @Option(name: [.customShort("o"), .long], help: "Output path. Use '-' for stdout.")
     var output: String?
 
+    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    var device: DeviceSelection = .auto
+
     @Option(name: .long, help: "Request timeout in seconds.")
     var timeout: Double = 5
 
     mutating func run() async throws {
+        let target = try await DeviceResolver.resolve(device, allowedKinds: [.simulator])
+        let simulator = try target.requireSimulator()
+        try await simulator.validateServer(timeout: timeout)
+
         // TODO: Use simctl screenshot when targeting a simulator.
         let data: Data
         do {

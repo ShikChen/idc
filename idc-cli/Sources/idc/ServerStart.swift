@@ -9,14 +9,15 @@ struct ServerStart: AsyncParsableCommand {
         abstract: "Start idc-server on a booted simulator (keep-alive test)"
     )
 
-    @Option(name: .long, help: "Booted simulator UDID to target.")
-    var udid: String?
+    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    var device: DeviceSelection = .auto
 
     mutating func run() async throws {
         let projectURL = try locateServerProject()
-        let device = try await resolveBootedDevice(selectedUDID: udid)
+        let target = try await DeviceResolver.resolve(device, allowedKinds: [.simulator])
+        let simulator = try target.requireSimulator()
 
-        let destination = "platform=iOS Simulator,id=\(device.udid)"
+        let destination = "platform=iOS Simulator,id=\(simulator.simulator.udid)"
         let args = [
             "test",
             "-project", projectURL.path,

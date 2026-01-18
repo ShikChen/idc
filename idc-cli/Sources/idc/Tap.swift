@@ -12,8 +12,8 @@ struct Tap: AsyncParsableCommand {
     @Option(name: .long, help: "Tap point x,y or x%,y% (optional).")
     var at: String?
 
-    @Option(name: .long, help: "Expected simulator UDID (optional).")
-    var udid: String?
+    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")
     var timeout: Double = 5
@@ -54,7 +54,9 @@ struct Tap: AsyncParsableCommand {
             point = nil
         }
 
-        try await validateUDID(udid, timeout: timeout)
+        let target = try await DeviceResolver.resolve(device, allowedKinds: [.simulator])
+        let simulator = try target.requireSimulator()
+        try await simulator.validateServer(timeout: timeout)
 
         let request = TapRequest(plan: plan, at: point)
         let (data, response) = try await postJSON(path: "/tap", body: request, timeout: timeout)
@@ -130,8 +132,4 @@ private func parsePointComponent(_ raw: String) throws -> PointComponent {
 struct TapRequest: Encodable {
     let plan: ExecutionPlan?
     let at: TapPoint?
-}
-
-struct ErrorResponse: Decodable {
-    let error: String
 }
