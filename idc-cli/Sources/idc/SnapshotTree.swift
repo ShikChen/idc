@@ -7,7 +7,7 @@ struct SnapshotResponse: Decodable {
 struct SnapshotNode: Decodable, Equatable {
     let identifier: String
     let elementType: String
-    let value: JSONValue?
+    let value: String?
     let placeholderValue: String?
     let title: String
     let label: String
@@ -23,34 +23,6 @@ struct Frame: Decodable, Equatable {
     let y: Double
     let width: Double
     let height: Double
-}
-
-enum JSONValue: Decodable, Equatable {
-    case string(String)
-    case number(Double)
-    case bool(Bool)
-    case null
-
-    init(from decoder: Decoder) throws {
-        let container = try decoder.singleValueContainer()
-        if container.decodeNil() {
-            self = .null
-            return
-        }
-        if let bool = try? container.decode(Bool.self) {
-            self = .bool(bool)
-            return
-        }
-        if let number = try? container.decode(Double.self) {
-            self = .number(number)
-            return
-        }
-        if let string = try? container.decode(String.self) {
-            self = .string(string)
-            return
-        }
-        throw DecodingError.dataCorruptedError(in: container, debugDescription: "Unsupported JSON value")
-    }
 }
 
 /// Simplify snapshot tree by collapsing redundant nodes and dropping empty leaves.
@@ -99,8 +71,8 @@ func snapshotLine(for node: SnapshotNode) -> String {
     addString("label", node.label, skipIfEmpty: true)
     addString("title", node.title, skipIfEmpty: true)
     addString("identifier", node.identifier, skipIfEmpty: true)
-    if let value = node.value, !isEmptyStringValue(value) {
-        parts.append("value=\(formatSnapshotValue(value))")
+    if let value = node.value, !value.isEmpty {
+        parts.append("value=\"\(escapeSnapshotValue(value))\"")
     }
     if let placeholder = node.placeholderValue, !placeholder.isEmpty {
         addString("placeholder", placeholder, skipIfEmpty: false)
@@ -169,7 +141,7 @@ private func hasValueLike(_ node: SnapshotNode) -> Bool {
     if !node.title.isEmpty { return true }
     if !node.identifier.isEmpty { return true }
     if node.placeholderValue != nil { return true }
-    if node.value != nil { return true }
+    if let value = node.value, !value.isEmpty { return true }
     return false
 }
 
@@ -195,27 +167,4 @@ private func escapeSnapshotValue(_ value: String) -> String {
     escaped = escaped.replacingOccurrences(of: "\r", with: "\\r")
     escaped = escaped.replacingOccurrences(of: "\t", with: "\\t")
     return escaped
-}
-
-private func formatSnapshotValue(_ value: JSONValue) -> String {
-    switch value {
-    case let .string(s):
-        return "\"\(escapeSnapshotValue(s))\""
-    case let .number(n):
-        if n == n.rounded() && abs(n) < Double(Int.max) {
-            return String(Int(n))
-        }
-        return String(n)
-    case let .bool(b):
-        return b ? "true" : "false"
-    case .null:
-        return "null"
-    }
-}
-
-private func isEmptyStringValue(_ value: JSONValue) -> Bool {
-    if case let .string(string) = value {
-        return string.isEmpty
-    }
-    return false
 }

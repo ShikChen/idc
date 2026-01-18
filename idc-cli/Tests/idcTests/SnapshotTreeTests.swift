@@ -88,7 +88,7 @@ final class SnapshotTreeTests: XCTestCase {
         identifier: String = "",
         label: String = "",
         title: String = "",
-        value: JSONValue? = nil,
+        value: String? = nil,
         placeholderValue: String? = nil,
         hasFocus: Bool = false,
         isEnabled: Bool = true,

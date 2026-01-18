@@ -84,7 +84,7 @@ struct FindResponse: Decodable {
 struct FindElement: Decodable, Equatable {
     let identifier: String
     let elementType: String
-    let value: JSONValue?
+    let value: String?
     let placeholderValue: String?
     let title: String
     let label: String
