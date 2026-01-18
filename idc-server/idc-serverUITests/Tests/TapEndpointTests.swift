@@ -110,7 +110,7 @@ final class TapEndpointTests: XCTestCase {
             .matchPredicate(format: "label ==", args: [])
         )
         let (data, response) = try await postTapRaw(plan: plan, at: nil)
-        try TestHelpers.assertBadRequest(response, data: data, contains: "Invalid predicate")
+        try TestHelpers.assertBadRequest(response, data: data, contains: "Invalid predicate", code: .invalidPredicate)
     }
 
     func testTapOnlyError() async throws {
@@ -119,7 +119,7 @@ final class TapEndpointTests: XCTestCase {
             .pickOnly
         )
         let (data, response) = try await postTapRaw(plan: plan, at: nil)
-        try TestHelpers.assertBadRequest(response, data: data, contains: "unique")
+        try TestHelpers.assertBadRequest(response, data: data, contains: "unique", code: .notUnique)
     }
 
     func testTapEmptyPlanError() async throws {
@@ -128,16 +128,17 @@ final class TapEndpointTests: XCTestCase {
         XCTAssertEqual(response.statusCode, 400)
         let error = try TestHelpers.decode(ErrorResponse.self, from: data)
         XCTAssertTrue(error.error.lowercased().contains("selector") || error.error.lowercased().contains("tap point"))
+        XCTAssertEqual(error.errorCode, .invalidPlan)
     }
 
     func testTapEmptyBodyError() async throws {
         let (data, response) = try await postTapRaw(body: Data())
-        try TestHelpers.assertBadRequest(response, data: data, contains: "empty")
+        try TestHelpers.assertBadRequest(response, data: data, contains: "empty", code: .emptyBody)
     }
 
     func testTapInvalidJSONError() async throws {
         let (data, response) = try await postTapRaw(body: Data("nope".utf8))
-        try TestHelpers.assertBadRequest(response, data: data, contains: "Invalid JSON")
+        try TestHelpers.assertBadRequest(response, data: data, contains: "Invalid JSON", code: .invalidJSON)
     }
 
     func testTapPickIndex() async throws {

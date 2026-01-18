@@ -10,12 +10,12 @@ struct SnapshotHandler {
         } catch let error as SnapshotError {
             switch error {
             case .noForeground:
-                return jsonError(error.localizedDescription, status: .conflict)
+                return jsonError(error.localizedDescription, code: .noForeground, status: .conflict)
             case .snapshotFailed:
-                return jsonError(error.localizedDescription, status: .internalServerError)
+                return jsonError(error.localizedDescription, code: .snapshotFailed, status: .internalServerError)
             }
         } catch {
-            return jsonError(error.localizedDescription, status: .internalServerError)
+            return jsonError(error.localizedDescription, code: .internalError, status: .internalServerError)
         }
     }
 }

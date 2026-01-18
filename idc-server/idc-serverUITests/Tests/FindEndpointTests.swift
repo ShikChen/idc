@@ -62,12 +62,12 @@ final class FindEndpointTests: XCTestCase {
 
     func testFindEmptyBodyError() async throws {
         let (data, http) = try await postFindRaw(body: Data())
-        try TestHelpers.assertBadRequest(http, data: data, contains: "empty")
+        try TestHelpers.assertBadRequest(http, data: data, contains: "empty", code: .emptyBody)
     }
 
     func testFindInvalidJSONError() async throws {
         let (data, http) = try await postFindRaw(body: Data("{".utf8))
-        try TestHelpers.assertBadRequest(http, data: data, contains: "Invalid JSON")
+        try TestHelpers.assertBadRequest(http, data: data, contains: "Invalid JSON", code: .invalidJSON)
     }
 
     private func postFind(plan: ExecutionPlan, limit: Int, live: Bool? = nil) async throws -> (FindResponse, HTTPURLResponse) {

@@ -24,7 +24,7 @@ func jsonResponse<T: Encodable>(_ payload: T, status: HTTPStatusCode = .ok) -> H
             body: body
         )
     } catch {
-        let body = (try? JSONEncoder().encode(ErrorResponse(error: "Failed to encode response."))) ?? Data()
+        let body = (try? JSONEncoder().encode(ErrorResponse(errorCode: .internalError, error: "Failed to encode response."))) ?? Data()
         return HTTPResponse(
             statusCode: .internalServerError,
             headers: [.contentType: "application/json"],
@@ -33,8 +33,8 @@ func jsonResponse<T: Encodable>(_ payload: T, status: HTTPStatusCode = .ok) -> H
     }
 }
 
-func jsonError(_ message: String, status: HTTPStatusCode) -> HTTPResponse {
-    jsonResponse(ErrorResponse(error: message), status: status)
+func jsonError(_ message: String, code: ErrorCode, status: HTTPStatusCode) -> HTTPResponse {
+    jsonResponse(ErrorResponse(errorCode: code, error: message), status: status)
 }
 
 func handleJSONRequest<T: Decodable, R: Encodable>(
@@ -46,11 +46,11 @@ func handleJSONRequest<T: Decodable, R: Encodable>(
         let response = try await handler(payload)
         return jsonResponse(response)
     } catch let error as RequestDecodingError {
-        return jsonError(error.localizedDescription, status: .badRequest)
+        return jsonError(error.localizedDescription, code: errorCode(for: error), status: .badRequest)
     } catch let error as PlanError {
-        return jsonError(error.localizedDescription, status: .badRequest)
+        return jsonError(error.localizedDescription, code: errorCode(for: error), status: .badRequest)
     } catch {
-        return jsonError(error.localizedDescription, status: .internalServerError)
+        return jsonError(error.localizedDescription, code: .internalError, status: .internalServerError)
     }
 }
 
@@ -63,5 +63,27 @@ private func decodeJSONBody<T: Decodable>(_ request: HTTPRequest) async throws -
         return try JSONDecoder().decode(T.self, from: data)
     } catch let error as DecodingError {
         throw RequestDecodingError.decoding(error)
+    }
+}
+
+private func errorCode(for error: RequestDecodingError) -> ErrorCode {
+    switch error {
+    case .emptyBody:
+        return .emptyBody
+    case .decoding:
+        return .invalidJSON
+    }
+}
+
+private func errorCode(for error: PlanError) -> ErrorCode {
+    switch error {
+    case .invalidPlan, .invalidType:
+        return .invalidPlan
+    case .invalidPredicate:
+        return .invalidPredicate
+    case .noMatches:
+        return .noMatches
+    case .notUnique:
+        return .notUnique
     }
 }

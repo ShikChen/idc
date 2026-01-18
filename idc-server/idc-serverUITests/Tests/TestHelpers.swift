@@ -117,9 +117,12 @@ enum TestHelpers {
 
     // MARK: - Assertions
 
-    static func assertBadRequest(_ response: HTTPURLResponse, data: Data, contains text: String) throws {
+    static func assertBadRequest(_ response: HTTPURLResponse, data: Data, contains text: String, code: ErrorCode? = nil) throws {
         XCTAssertEqual(response.statusCode, 400)
         let error = try decode(ErrorResponse.self, from: data)
         XCTAssertTrue(error.error.contains(text))
+        if let code {
+            XCTAssertEqual(error.errorCode, code)
+        }
     }
 }
