@@ -41,8 +41,8 @@
 - [ ] `idc devices info`
 - [ ] `idc devices boot`
 - [ ] `idc devices shutdown`
-- [ ] `idc app list`（Simulator only，走 `simctl listapps`）
-- [ ] `idc app open <bundle-id>`（Simulator only，走 `simctl launch`）
+- [x] `idc app list`（Simulator only，走 `simctl listapps`）
+- [x] `idc app open <bundle-id>`（Simulator only，走 `simctl launch`）
 - [ ] `idc server deploy` 自動部署 idc-server 到 Simulator
 - [ ] JSON 輸出格式支援 (`--json`)
 

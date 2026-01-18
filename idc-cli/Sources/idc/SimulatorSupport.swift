@@ -13,7 +13,7 @@ struct SimctlAppInfo: Codable, Equatable {
     let bundleId: String
     let name: String?
     let version: String?
-    let appType: String?
+    let type: String?
 }
 
 private struct SimctlList: Decodable {
@@ -61,7 +61,7 @@ func parseSimctlListApps(_ data: Data) throws -> [SimctlAppInfo] {
         let name = stringValue(info["CFBundleDisplayName"]) ?? stringValue(info["CFBundleName"])
         let version = stringValue(info["CFBundleShortVersionString"]) ?? stringValue(info["CFBundleVersion"])
         let appType = stringValue(info["ApplicationType"])
-        apps.append(SimctlAppInfo(bundleId: bundleId, name: name, version: version, appType: appType))
+        apps.append(SimctlAppInfo(bundleId: bundleId, name: name, version: version, type: appType))
     }
     return apps.sorted { $0.bundleId.localizedStandardCompare($1.bundleId) == .orderedAscending }
 }
