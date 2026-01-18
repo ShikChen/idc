@@ -17,10 +17,10 @@
 
 ## Running App
 - [x] 強化前景 app 判斷：排除 unknownBundleId、必要時重試
-- [ ] 允許指定 bundleId（可選），避免多 app 前景判定不穩
+- [x] 允許指定 bundleId（可選），避免多 app 前景判定不穩
 
 ## Tests
-- [ ] 新增 /stop、/screenshot endpoint 測試
+- [x] 新增 /stop、/screenshot endpoint 測試
 - [x] 新增 invalid JSON body / empty body 的錯誤碼測試
 - [ ] 新增 tap point 超出範圍 / 非有限值 / limit 上限的測試
 
