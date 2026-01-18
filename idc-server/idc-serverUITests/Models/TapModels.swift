@@ -49,19 +49,34 @@ struct TapElement: Codable {
         identifier = element.identifier
         label = element.label
         title = element.title
-        value = TapElement.stringValue(element.value)
+        value = ElementValue.stringValue(element.value)
         placeholderValue = element.placeholderValue
         frame = Frame(element.frame)
     }
+}
 
-    private static func stringValue(_ value: Any?) -> String? {
+enum ElementValue {
+    static func stringValue(_ value: Any?) -> String? {
         switch value {
         case let string as String:
             return string
         case let number as NSNumber:
+            if CFGetTypeID(number) == CFBooleanGetTypeID() {
+                return number.boolValue ? "true" : "false"
+            }
             return number.stringValue
+        case let bool as Bool:
+            return bool ? "true" : "false"
+        case let int as Int:
+            return String(int)
+        case let double as Double:
+            return String(double)
+        case let float as Float:
+            return String(float)
+        case let cgFloat as CGFloat:
+            return String(Double(cgFloat))
         default:
-            return nil
+            return value.map { String(describing: $0) }
         }
     }
 }

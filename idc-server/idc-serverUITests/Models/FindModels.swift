@@ -15,7 +15,7 @@ struct FindResponse: Codable {
 struct FindElement: Codable {
     let identifier: String
     let elementType: String
-    let value: JSONValue?
+    let value: String?
     let placeholderValue: String?
     let title: String
     let label: String
@@ -27,7 +27,7 @@ struct FindElement: Codable {
     init(from element: XCUIElement) {
         identifier = element.identifier
         elementType = elementTypeName(element.elementType)
-        value = JSONValue.fromAny(element.value)
+        value = ElementValue.stringValue(element.value)
         placeholderValue = element.placeholderValue
         title = element.title
         label = element.label
@@ -40,7 +40,7 @@ struct FindElement: Codable {
     init(from snapshot: XCUIElementSnapshot) {
         identifier = snapshot.identifier
         elementType = elementTypeName(snapshot.elementType)
-        value = JSONValue.fromAny(snapshot.value)
+        value = ElementValue.stringValue(snapshot.value)
         placeholderValue = snapshot.placeholderValue
         title = snapshot.title
         label = snapshot.label
