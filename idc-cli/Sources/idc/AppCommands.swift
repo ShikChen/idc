@@ -11,19 +11,32 @@ struct App: ParsableCommand {
 struct AppList: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "list",
-        abstract: "List installed apps on a booted simulator"
+        abstract: "List installed apps on a device or booted simulator"
     )
 
-    @Option(name: .long, help: "Booted simulator UDID to target.")
+    @Option(name: .long, help: "Device UDID (real device or booted simulator).")
     var udid: String?
 
     @Flag(name: .long, help: "Output JSON.")
     var json: Bool = false
 
     mutating func run() async throws {
-        let device = try await resolveBootedDevice(selectedUDID: udid)
-        let data = try await runCommand("xcrun", ["simctl", "listapps", device.udid, "--json"])
-        let apps = try parseSimctlListApps(data)
+        let apps: [SimctlAppInfo]
+        if let udid {
+            if let simulator = try await findSimulator(udid: udid) {
+                guard simulator.state == "Booted" else {
+                    throw ValidationError("Simulator not booted: \(simulator.name) (\(simulator.udid)).")
+                }
+                let data = try await runCommand("xcrun", ["simctl", "listapps", simulator.udid, "--json"])
+                apps = try parseSimctlListApps(data)
+            } else {
+                apps = try await listDeviceApps(deviceId: udid)
+            }
+        } else {
+            let simulator = try await resolveBootedDevice(selectedUDID: nil)
+            let data = try await runCommand("xcrun", ["simctl", "listapps", simulator.udid, "--json"])
+            apps = try parseSimctlListApps(data)
+        }
 
         if json {
             let payload = AppListResponse(apps: apps)

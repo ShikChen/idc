@@ -20,6 +20,12 @@ private struct SimctlList: Decodable {
     let devices: [String: [SimDevice]]
 }
 
+func findSimulator(udid: String) async throws -> SimDevice? {
+    let data = try await runCommand("xcrun", ["simctl", "list", "devices", "--json"])
+    let decoded = try JSONDecoder().decode(SimctlList.self, from: data)
+    return decoded.devices.values.flatMap { $0 }.first(where: { $0.udid == udid })
+}
+
 func resolveBootedDevice(selectedUDID: String?) async throws -> SimDevice {
     let data = try await runCommand("xcrun", ["simctl", "list", "devices", "booted", "--json"])
     let decoded = try JSONDecoder().decode(SimctlList.self, from: data)
