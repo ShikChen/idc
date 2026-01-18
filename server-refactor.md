@@ -8,7 +8,7 @@
 ## Concurrency / Lifecycle
 - [x] 重整 TestServer lifecycle：統一 start / runForever，支援 cancel/await，避免 stop race
 - [x] 明確定義 MainActor 範圍，只在必要時接觸 XCUI* API，其餘資料整理移出主執行緒
-- [ ] TapService/FindService 的 retry/limit/timeout 改成可配置常數
+- [x] TapService/FindService 的 retry/limit/timeout 改成可配置常數
 
 ## Domain / Models
 - [ ] 合併 TapElement / FindElement / SnapshotNode 的共通欄位成 Shared model
