@@ -68,3 +68,15 @@ func openAppViaServer(bundleId: String, wait: Double, timeout: TimeInterval) asy
         throw ValidationError("App open failed with HTTP \(response.statusCode).")
     }
 }
+
+func writeJSON(_ data: Data) {
+    FileHandle.standardOutput.write(data)
+    if data.last != 0x0A {
+        FileHandle.standardOutput.write(Data([0x0A]))
+    }
+}
+
+func writeJSON<T: Encodable>(_ payload: T) throws {
+    let data = try JSONEncoder().encode(payload)
+    writeJSON(data)
+}

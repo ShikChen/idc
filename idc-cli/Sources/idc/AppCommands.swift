@@ -25,12 +25,7 @@ struct AppList: AsyncParsableCommand {
         let apps = try await target.listApps()
 
         if json {
-            let payload = AppListResponse(apps: apps)
-            let output = try JSONEncoder().encode(payload)
-            FileHandle.standardOutput.write(output)
-            if output.last != 0x0A {
-                FileHandle.standardOutput.write(Data([0x0A]))
-            }
+            try writeJSON(AppListResponse(apps: apps))
             return
         }
 

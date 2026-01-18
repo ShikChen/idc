@@ -28,10 +28,7 @@ struct Snapshot: AsyncParsableCommand {
         }
 
         if json {
-            FileHandle.standardOutput.write(data)
-            if data.last != 0x0A {
-                FileHandle.standardOutput.write(Data([0x0A]))
-            }
+            writeJSON(data)
             return
         }
 
