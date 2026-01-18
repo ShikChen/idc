@@ -7,6 +7,11 @@ private struct DevicectlAppsResponse: Decodable {
     let error: DevicectlError?
 }
 
+private struct DevicectlOutcomeResponse: Decodable {
+    let info: DevicectlInfo?
+    let error: DevicectlError?
+}
+
 private struct DevicectlInfo: Decodable {
     let outcome: String?
 }
@@ -107,6 +112,45 @@ func listDeviceApps(deviceId: String) async throws -> [SimctlAppInfo] {
     }
 
     return mapped.sorted { $0.bundleId.localizedStandardCompare($1.bundleId) == .orderedAscending }
+}
+
+func openDeviceApp(deviceId: String, bundleId: String, wait: Double) async throws {
+    let tempDir = FileManager.default.temporaryDirectory.appendingPathComponent(
+        "devicectl-\(UUID().uuidString)",
+        isDirectory: true
+    )
+    try FileManager.default.createDirectory(at: tempDir, withIntermediateDirectories: true)
+    defer { try? FileManager.default.removeItem(at: tempDir) }
+
+    let outputURL = tempDir.appendingPathComponent("launch.json")
+    var arguments = ["devicectl", "--json-output", outputURL.path]
+    if wait > 0 {
+        let timeoutSeconds = max(5, Int(ceil(wait)))
+        arguments.append(contentsOf: ["--timeout", String(timeoutSeconds)])
+    }
+    arguments.append(contentsOf: [
+        "device",
+        "process",
+        "launch",
+        "--device",
+        deviceId,
+        bundleId,
+        "--activate",
+    ])
+
+    _ = try await runCommand("xcrun", arguments)
+
+    guard let data = try? Data(contentsOf: outputURL) else {
+        throw ValidationError("Unable to read devicectl JSON output.")
+    }
+
+    let response = try JSONDecoder().decode(DevicectlOutcomeResponse.self, from: data)
+    if response.info?.outcome == "failed" {
+        if let message = response.error?.userInfo?.localizedDescription?.string, !message.isEmpty {
+            throw ValidationError(message)
+        }
+        throw ValidationError("devicectl reported a failure.")
+    }
 }
 
 private func mapDevicectlAppType(_ app: DevicectlApp) -> String? {

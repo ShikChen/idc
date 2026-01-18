@@ -78,7 +78,7 @@ struct AppOpen: AsyncParsableCommand {
     @Argument(help: "App bundle identifier.")
     var bundleId: String
 
-    @Option(name: .long, help: "Expected device UDID (optional).")
+    @Option(name: .long, help: "Device UDID (real device or booted simulator).")
     var udid: String?
 
     @Option(name: .long, help: "Wait for foreground confirmation in seconds (0 disables).")
@@ -89,18 +89,26 @@ struct AppOpen: AsyncParsableCommand {
         guard !trimmed.isEmpty else {
             throw ValidationError("Bundle ID must not be empty.")
         }
+        guard wait >= 0 else {
+            throw ValidationError("Wait must be greater than or equal to 0.")
+        }
 
         let timeout = max(wait, 5)
-        try await validateUDID(udid, timeout: timeout)
 
-        let request = AppOpenRequest(bundleId: trimmed, wait: wait)
-        let (data, response) = try await postJSON(path: "/app/open", body: request, timeout: timeout)
-        guard response.statusCode == 200 else {
-            if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
-                throw ValidationError(error.error)
+        if let udid {
+            if let simulator = try await findSimulator(udid: udid) {
+                guard simulator.state == "Booted" else {
+                    throw ValidationError("Simulator not booted: \(simulator.name) (\(simulator.udid)).")
+                }
+                try await validateUDID(udid, timeout: timeout)
+                try await openViaServer(bundleId: trimmed, wait: wait, timeout: timeout)
+            } else {
+                try await openDeviceApp(deviceId: udid, bundleId: trimmed, wait: wait)
             }
-            throw ValidationError("App open failed with HTTP \(response.statusCode).")
+            return
         }
+
+        try await openViaServer(bundleId: trimmed, wait: wait, timeout: timeout)
     }
 }
 
@@ -115,5 +123,16 @@ private struct AppOpenRequest: Encodable {
     enum CodingKeys: String, CodingKey {
         case bundleId = "bundle_id"
         case wait
+    }
+}
+
+private func openViaServer(bundleId: String, wait: Double, timeout: TimeInterval) async throws {
+    let request = AppOpenRequest(bundleId: bundleId, wait: wait)
+    let (data, response) = try await postJSON(path: "/app/open", body: request, timeout: timeout)
+    guard response.statusCode == 200 else {
+        if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+            throw ValidationError(error.error)
+        }
+        throw ValidationError("App open failed with HTTP \(response.statusCode).")
     }
 }
