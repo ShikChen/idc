@@ -13,10 +13,10 @@
 ## Domain / Models
 - [x] 合併 TapElement / FindElement / SnapshotNode 的共通欄位成 ElementAttributes（breaking JSON）
 - [x] 集中 Frame / ElementValue 到 ElementAttributes
-- [ ] PlanExecutor 分離「驗證」與「查詢」，提高可測試性
+- [x] PlanExecutor 分離「驗證」與「查詢」，提高可測試性
 
 ## Running App
-- [ ] 強化前景 app 判斷：排除 unknownBundleId、必要時重試
+- [x] 強化前景 app 判斷：排除 unknownBundleId、必要時重試
 - [ ] 允許指定 bundleId（可選），避免多 app 前景判定不穩
 
 ## Tests

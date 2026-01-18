@@ -41,6 +41,8 @@
 - [ ] `idc devices info`
 - [ ] `idc devices boot`
 - [ ] `idc devices shutdown`
+- [ ] `idc app list`（Simulator only，走 `simctl listapps`）
+- [ ] `idc app open <bundle-id>`（Simulator only，走 `simctl launch`）
 - [ ] `idc server deploy` 自動部署 idc-server 到 Simulator
 - [ ] JSON 輸出格式支援 (`--json`)
 
@@ -65,6 +67,8 @@
 - [ ] 加入真機目的地支援（`--udid`）
 - [ ] 簽名/授權策略（必要時 `-allowProvisioningUpdates`）
 - [ ] 真機專用錯誤訊息與指引
+- [ ] `idc app list`（真機：host 端走 installation proxy / MobileDevice 或外部工具）
+- [ ] `idc app open`（真機：server 端 XCUIApplication + bundle id）
 
 ## Phase 7: Agent Skill 打包
 
