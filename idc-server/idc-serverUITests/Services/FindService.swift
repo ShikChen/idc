@@ -2,7 +2,7 @@ import XCTest
 
 struct FindService {
     func resolve(_ request: FindRequest) async throws -> FindResponse {
-        let executor = PlanExecutor()
+        let executor = SnapshotPlanExecutor()
         let limit = request.limit ?? 20
         guard limit > 0 else {
             throw PlanError.invalidPlan("Limit must be greater than 0.")
@@ -14,25 +14,16 @@ struct FindService {
             guard let app = RunningApp.getForegroundApp() else {
                 throw PlanError.invalidPlan("No foreground app found.")
             }
-            let node = try executor.resolveNode(plan, from: app)
+            let rootSnapshot = try app.snapshot()
+            let node = try executor.resolveNode(plan, from: rootSnapshot)
             switch node {
-            case let .element(element):
-                guard element.exists else {
-                    return FindResponse(matches: [], truncated: false)
-                }
-                let snapshot = try element.snapshot()
+            case let .element(snapshot):
                 return FindResponse(matches: [FindElement(from: snapshot)], truncated: false)
             case let .query(query):
-                var matches: [FindElement] = []
-                matches.reserveCapacity(limit)
-                for index in 0 ..< limit {
-                    let element = query.element(boundBy: index)
-                    guard element.exists else { break }
-                    let snapshot = try element.snapshot()
-                    matches.append(FindElement(from: snapshot))
-                }
-                let extraExists = query.element(boundBy: limit).exists
-                return FindResponse(matches: matches, truncated: extraExists)
+                let limited = query.prefix(limit)
+                let matches = limited.map { FindElement(from: $0) }
+                let truncated = query.count > limit
+                return FindResponse(matches: matches, truncated: truncated)
             }
         }
     }
