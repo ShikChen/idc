@@ -1,8 +1,8 @@
 import XCTest
 
 struct TapService {
-    private let maxAttempts = 5
-    private let retryDelayNs: UInt64 = 200_000_000
+    private static let maxAttempts = 5
+    private static let retryDelayNs: UInt64 = 200_000_000
 
     func resolve(_ request: TapRequest) async throws -> TapResponse {
         let executor = PlanExecutor()
@@ -14,7 +14,7 @@ struct TapService {
             try validateTapPoint(point)
         }
         var lastError: Error?
-        for attempt in 0 ..< maxAttempts {
+        for attempt in 0 ..< Self.maxAttempts {
             do {
                 let tapped = try await MainActor.run { () -> TapElement? in
                     guard let app = RunningApp.getForegroundApp() else {
@@ -27,8 +27,8 @@ struct TapService {
                 return TapResponse(selected: tapped)
             } catch let error as PlanError {
                 lastError = error
-                if case .noMatches = error, attempt < (maxAttempts - 1) {
-                    try await Task.sleep(nanoseconds: retryDelayNs)
+                if case .noMatches = error, attempt < (Self.maxAttempts - 1) {
+                    try await Task.sleep(nanoseconds: Self.retryDelayNs)
                     continue
                 }
                 throw error

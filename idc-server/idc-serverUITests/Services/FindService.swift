@@ -1,10 +1,12 @@
 import XCTest
 
 struct FindService {
+    private static let defaultLimit = 20
+
     func resolve(_ request: FindRequest) async throws -> FindResponse {
         let live = request.live ?? false
         let executor = SnapshotPlanExecutor()
-        let limit = request.limit ?? 20
+        let limit = request.limit ?? Self.defaultLimit
         guard limit > 0 else {
             throw PlanError.invalidPlan("Limit must be greater than 0.")
         }
