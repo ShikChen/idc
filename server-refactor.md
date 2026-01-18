@@ -6,7 +6,7 @@
 - [x] 把 route 註冊集中成表格或 enum，減少手動 appendRoute 的重複樣板
 
 ## Concurrency / Lifecycle
-- [ ] 重整 TestServer lifecycle：統一 start / runForever，支援 cancel/await，避免 stop race
+- [x] 重整 TestServer lifecycle：統一 start / runForever，支援 cancel/await，避免 stop race
 - [ ] 明確定義 MainActor 範圍，只在必要時接觸 XCUI* API，其餘資料整理移出主執行緒
 - [ ] TapService/FindService 的 retry/limit/timeout 改成可配置常數
 
