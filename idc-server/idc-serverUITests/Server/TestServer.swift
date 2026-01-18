@@ -96,10 +96,10 @@ actor TestServer {
         let healthHandler = HealthHandler()
         let infoHandler = InfoHandler()
         let screenshotHandler = ScreenshotHandler()
-        let snapshotHandler = SnapshotHandler(service: SnapshotService())
-        let tapHandler = TapHandler(service: TapService())
-        let findHandler = FindHandler(service: FindService())
-        let appOpenHandler = AppOpenHandler(service: AppOpenService())
+        let snapshotHandler = SnapshotHandler()
+        let tapHandler = TapHandler()
+        let findHandler = FindHandler()
+        let appOpenHandler = AppOpenHandler()
 
         typealias RouteHandler = @Sendable (HTTPRequest) async -> HTTPResponse
         let routes: [(path: String, methods: [HTTPMethod], handler: RouteHandler)] = [
