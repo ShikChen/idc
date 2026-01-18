@@ -1,10 +1,9 @@
 import ArgumentParser
 import Foundation
-import Subprocess
 
 struct App: ParsableCommand {
     static let configuration = CommandConfiguration(
-        abstract: "Manage apps on the simulator",
+        abstract: "Manage apps",
         subcommands: [AppList.self, AppOpen.self]
     )
 }
@@ -60,16 +59,16 @@ struct AppList: AsyncParsableCommand {
 struct AppOpen: AsyncParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "open",
-        abstract: "Open an app on a booted simulator by bundle ID"
+        abstract: "Open an app by bundle ID via idc-server"
     )
 
     @Argument(help: "App bundle identifier.")
     var bundleId: String
 
-    @Option(name: .long, help: "Booted simulator UDID to target.")
+    @Option(name: .long, help: "Expected device UDID (optional).")
     var udid: String?
 
-    @Option(name: .long, help: "Wait for app to be running in seconds (0 disables).")
+    @Option(name: .long, help: "Wait for foreground confirmation in seconds (0 disables).")
     var wait: Double = 5
 
     mutating func run() async throws {
@@ -78,18 +77,17 @@ struct AppOpen: AsyncParsableCommand {
             throw ValidationError("Bundle ID must not be empty.")
         }
 
-        let device = try await resolveBootedDevice(selectedUDID: udid)
-        let data = try await runCommand("xcrun", ["simctl", "launch", device.udid, trimmed])
-        let output = String(data: data, encoding: .utf8)?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-        if !output.isEmpty {
-            print(output)
-        }
+        let timeout = max(wait, 5)
+        try await validateUDID(udid, timeout: timeout)
 
-        guard wait > 0 else { return }
-        guard let pid = parseLaunchPID(output) else {
-            throw ValidationError("Unable to parse launch pid from simctl output.")
+        let request = AppOpenRequest(bundleId: trimmed, wait: wait)
+        let (data, response) = try await postJSON(path: "/app/open", body: request, timeout: timeout)
+        guard response.statusCode == 200 else {
+            if let error = try? JSONDecoder().decode(ErrorResponse.self, from: data) {
+                throw ValidationError(error.error)
+            }
+            throw ValidationError("App open failed with HTTP \(response.statusCode).")
         }
-        try await waitForProcess(udid: device.udid, pid: pid, timeout: wait)
     }
 }
 
@@ -97,39 +95,12 @@ private struct AppListResponse: Encodable {
     let apps: [SimctlAppInfo]
 }
 
-private func parseLaunchPID(_ output: String) -> Int? {
-    let tokens = output.split { $0 == " " || $0 == "\t" || $0 == "\n" }
-    guard let last = tokens.last else { return nil }
-    return Int(last.trimmingCharacters(in: .whitespacesAndNewlines))
-}
+private struct AppOpenRequest: Encodable {
+    let bundleId: String
+    let wait: Double
 
-private func waitForProcess(udid: String, pid: Int, timeout: Double) async throws {
-    let deadline = Date().addingTimeInterval(timeout)
-    while Date() < deadline {
-        if await isProcessRunning(udid: udid, pid: pid) {
-            return
-        }
-        try await Task.sleep(nanoseconds: 200_000_000)
-    }
-    throw ValidationError("App did not launch within \(timeout)s.")
-}
-
-private func isProcessRunning(udid: String, pid: Int) async -> Bool {
-    do {
-        let result = try await run(
-            .name("xcrun"),
-            arguments: Arguments(["simctl", "spawn", udid, "ps", "-p", String(pid), "-o", "pid="]),
-            output: .bytes(limit: 1024),
-            error: .string(limit: 1024)
-        )
-        switch result.terminationStatus {
-        case let .exited(code) where code == 0:
-            let output = String(decoding: result.standardOutput, as: UTF8.self).trimmingCharacters(in: .whitespacesAndNewlines)
-            return !output.isEmpty
-        default:
-            return false
-        }
-    } catch {
-        return false
+    enum CodingKeys: String, CodingKey {
+        case bundleId = "bundle_id"
+        case wait
     }
 }

@@ -99,6 +99,7 @@ actor TestServer {
         let snapshotHandler = SnapshotHandler(service: SnapshotService())
         let tapHandler = TapHandler(service: TapService())
         let findHandler = FindHandler(service: FindService())
+        let appOpenHandler = AppOpenHandler(service: AppOpenService())
 
         typealias RouteHandler = @Sendable (HTTPRequest) async -> HTTPResponse
         let routes: [(path: String, methods: [HTTPMethod], handler: RouteHandler)] = [
@@ -108,6 +109,7 @@ actor TestServer {
             ("/snapshot", [.GET], { request in await snapshotHandler.handle(request) }),
             ("/tap", [.POST], { request in await tapHandler.handle(request) }),
             ("/find", [.POST], { request in await findHandler.handle(request) }),
+            ("/app/open", [.POST], { request in await appOpenHandler.handle(request) }),
             ("/stop", [.POST], { _ in
                 Task { await self.stop() }
                 return jsonResponse(HealthResponse(status: "stopping"))
