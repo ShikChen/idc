@@ -96,18 +96,18 @@ final class SnapshotTreeTests: XCTestCase {
         frame: Frame = Frame(x: 0, y: 0, width: 10, height: 10),
         _ children: SnapshotNode...
     ) -> SnapshotNode {
-        SnapshotNode(
-            identifier: identifier,
+        let element = ElementAttributes(
             elementType: type,
+            identifier: identifier,
+            label: label,
+            title: title,
             value: value,
             placeholderValue: placeholderValue,
-            title: title,
-            label: label,
             hasFocus: hasFocus,
             isEnabled: isEnabled,
             isSelected: isSelected,
-            frame: frame,
-            children: children
+            frame: frame
         )
+        return SnapshotNode(element: element, children: children)
     }
 }

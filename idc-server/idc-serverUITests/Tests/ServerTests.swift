@@ -62,9 +62,9 @@ final class ServerEndpointsTests: XCTestCase {
         XCTAssertEqual(httpResponse.statusCode, 200)
 
         let payload = try TestHelpers.decode(SnapshotResponse.self, from: data)
-        XCTAssertFalse(payload.root.elementType.isEmpty)
-        XCTAssertGreaterThanOrEqual(payload.root.frame.width, 0)
-        XCTAssertGreaterThanOrEqual(payload.root.frame.height, 0)
+        XCTAssertFalse(payload.root.element.elementType.isEmpty)
+        XCTAssertGreaterThanOrEqual(payload.root.element.frame.width, 0)
+        XCTAssertGreaterThanOrEqual(payload.root.element.frame.height, 0)
     }
 }
 

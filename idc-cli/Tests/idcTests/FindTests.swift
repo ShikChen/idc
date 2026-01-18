@@ -3,13 +3,13 @@ import XCTest
 
 final class FindTests: XCTestCase {
     func testFormatFindLine() {
-        let element = FindElement(
-            identifier: "gearshape",
+        let element = ElementAttributes(
             elementType: "button",
+            identifier: "gearshape",
+            label: "設定",
+            title: "",
             value: nil,
             placeholderValue: nil,
-            title: "",
-            label: "設定",
             hasFocus: false,
             isEnabled: false,
             isSelected: true,

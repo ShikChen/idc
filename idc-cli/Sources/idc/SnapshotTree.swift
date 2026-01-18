@@ -5,24 +5,8 @@ struct SnapshotResponse: Decodable {
 }
 
 struct SnapshotNode: Decodable, Equatable {
-    let identifier: String
-    let elementType: String
-    let value: String?
-    let placeholderValue: String?
-    let title: String
-    let label: String
-    let hasFocus: Bool
-    let isEnabled: Bool
-    let isSelected: Bool
-    let frame: Frame
+    let element: ElementAttributes
     let children: [SnapshotNode]
-}
-
-struct Frame: Decodable, Equatable {
-    let x: Double
-    let y: Double
-    let width: Double
-    let height: Double
 }
 
 /// Simplify snapshot tree by collapsing redundant nodes and dropping empty leaves.
@@ -43,23 +27,12 @@ func simplifySnapshotTree(_ node: SnapshotNode, isRoot: Bool = true) -> Snapshot
         return nil
     }
 
-    return SnapshotNode(
-        identifier: node.identifier,
-        elementType: node.elementType,
-        value: node.value,
-        placeholderValue: node.placeholderValue,
-        title: node.title,
-        label: node.label,
-        hasFocus: node.hasFocus,
-        isEnabled: node.isEnabled,
-        isSelected: node.isSelected,
-        frame: node.frame,
-        children: simplifiedChildren
-    )
+    return SnapshotNode(element: node.element, children: simplifiedChildren)
 }
 
 func snapshotLine(for node: SnapshotNode) -> String {
-    let head = String(format: "%@@(%.0f,%.0f,%.0f,%.0f)", node.elementType, node.frame.x, node.frame.y, node.frame.width, node.frame.height)
+    let element = node.element
+    let head = String(format: "%@@(%.0f,%.0f,%.0f,%.0f)", element.elementType, element.frame.x, element.frame.y, element.frame.width, element.frame.height)
     var parts: [String] = [head]
     func addString(_ key: String, _ value: String, skipIfEmpty: Bool) {
         if skipIfEmpty, value.isEmpty {
@@ -68,22 +41,22 @@ func snapshotLine(for node: SnapshotNode) -> String {
         parts.append("\(key)=\"\(escapeSnapshotValue(value))\"")
     }
 
-    addString("label", node.label, skipIfEmpty: true)
-    addString("title", node.title, skipIfEmpty: true)
-    addString("identifier", node.identifier, skipIfEmpty: true)
-    if let value = node.value, !value.isEmpty {
+    addString("label", element.label, skipIfEmpty: true)
+    addString("title", element.title, skipIfEmpty: true)
+    addString("identifier", element.identifier, skipIfEmpty: true)
+    if let value = element.value, !value.isEmpty {
         parts.append("value=\"\(escapeSnapshotValue(value))\"")
     }
-    if let placeholder = node.placeholderValue, !placeholder.isEmpty {
+    if let placeholder = element.placeholderValue, !placeholder.isEmpty {
         addString("placeholder", placeholder, skipIfEmpty: false)
     }
-    if node.hasFocus {
+    if element.hasFocus {
         parts.append("hasFocus=true")
     }
-    if !node.isEnabled {
+    if !element.isEnabled {
         parts.append("isEnabled=false")
     }
-    if node.isSelected {
+    if element.isSelected {
         parts.append("isSelected=true")
     }
     return parts.joined(separator: " ")
@@ -128,29 +101,31 @@ private func flattenNode(_ node: SnapshotNode) -> [SnapshotNode] {
 }
 
 private func shouldFlattenNode(_ node: SnapshotNode) -> Bool {
-    guard node.elementType == "other" else { return false }
+    guard node.element.elementType == "other" else { return false }
     guard !hasValueLike(node) else { return false }
-    guard node.hasFocus == false, node.isEnabled == true, node.isSelected == false else {
+    let element = node.element
+    guard element.hasFocus == false, element.isEnabled == true, element.isSelected == false else {
         return false
     }
     return true
 }
 
 private func hasValueLike(_ node: SnapshotNode) -> Bool {
-    if !node.label.isEmpty { return true }
-    if !node.title.isEmpty { return true }
-    if !node.identifier.isEmpty { return true }
-    if node.placeholderValue != nil { return true }
-    if let value = node.value, !value.isEmpty { return true }
+    let element = node.element
+    if !element.label.isEmpty { return true }
+    if !element.title.isEmpty { return true }
+    if !element.identifier.isEmpty { return true }
+    if element.placeholderValue != nil { return true }
+    if let value = element.value, !value.isEmpty { return true }
     return false
 }
 
 private func isSameShape(_ lhs: SnapshotNode, _ rhs: SnapshotNode) -> Bool {
-    return lhs.elementType == rhs.elementType &&
-        lhs.hasFocus == rhs.hasFocus &&
-        lhs.isEnabled == rhs.isEnabled &&
-        lhs.isSelected == rhs.isSelected &&
-        isSameFrame(lhs.frame, rhs.frame)
+    return lhs.element.elementType == rhs.element.elementType &&
+        lhs.element.hasFocus == rhs.element.hasFocus &&
+        lhs.element.isEnabled == rhs.element.isEnabled &&
+        lhs.element.isSelected == rhs.element.isSelected &&
+        isSameFrame(lhs.element.frame, rhs.element.frame)
 }
 
 private func isSameFrame(_ lhs: Frame, _ rhs: Frame) -> Bool {

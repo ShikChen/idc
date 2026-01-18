@@ -11,8 +11,8 @@
 - [x] TapService/FindService 的 retry/limit/timeout 改成可配置常數
 
 ## Domain / Models
-- [ ] 合併 TapElement / FindElement / SnapshotNode 的共通欄位成 Shared model
-- [ ] 將 Frame / JSONValue / elementType mapping 移到 Models/Common
+- [x] 合併 TapElement / FindElement / SnapshotNode 的共通欄位成 ElementAttributes（breaking JSON）
+- [x] 集中 Frame / ElementValue 到 ElementAttributes
 - [ ] PlanExecutor 分離「驗證」與「查詢」，提高可測試性
 
 ## Running App

@@ -81,32 +81,9 @@ struct FindResponse: Decodable {
     let truncated: Bool
 }
 
-struct FindElement: Decodable, Equatable {
-    let identifier: String
-    let elementType: String
-    let value: String?
-    let placeholderValue: String?
-    let title: String
-    let label: String
-    let hasFocus: Bool
-    let isEnabled: Bool
-    let isSelected: Bool
-    let frame: Frame
-}
+typealias FindElement = ElementAttributes
 
 func formatFindLine(index: Int, element: FindElement) -> String {
-    let node = SnapshotNode(
-        identifier: element.identifier,
-        elementType: element.elementType,
-        value: element.value,
-        placeholderValue: element.placeholderValue,
-        title: element.title,
-        label: element.label,
-        hasFocus: element.hasFocus,
-        isEnabled: element.isEnabled,
-        isSelected: element.isSelected,
-        frame: element.frame,
-        children: []
-    )
+    let node = SnapshotNode(element: element, children: [])
     return "#\(index) \(snapshotLine(for: node))"
 }
