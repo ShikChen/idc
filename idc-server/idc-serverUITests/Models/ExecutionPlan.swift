@@ -284,19 +284,19 @@ struct SnapshotPlanExecutor {
             return .query(children(from: roots, type: elementType, index: index))
         case let .matchIdentifier(value):
             let query = try requireQuery(node)
-            return .query(try filter(query, index: index) { $0.identifier == value })
+            return try .query(filter(query, index: index) { $0.identifier == value })
         case let .matchTypeIdentifier(type, value):
             let elementType = try resolveElementType(type)
             let query = try requireQuery(node)
-            return .query(try filter(query, index: index) { $0.elementType == elementType && $0.identifier == value })
+            return try .query(filter(query, index: index) { $0.elementType == elementType && $0.identifier == value })
         case let .matchPredicate(format, args):
             let predicate = try predicateFromFormat(format, args: args)
             let query = try requireQuery(node)
-            return .query(try filter(query, index: index) { try predicateMatches(predicate, snapshot: $0) })
+            return try .query(filter(query, index: index) { try predicateMatches(predicate, snapshot: $0) })
         case let .containPredicate(format, args):
             let predicate = try predicateFromFormat(format, args: args)
             let query = try requireQuery(node)
-            return .query(try contain(query, predicate: predicate, index: index))
+            return try .query(contain(query, predicate: predicate, index: index))
         case let .containTypeIdentifier(type, value):
             let elementType = try resolveElementType(type)
             let query = try requireQuery(node)

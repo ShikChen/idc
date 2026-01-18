@@ -79,7 +79,7 @@ final class FindEndpointTests: XCTestCase {
 
     private func postFindRaw(plan: ExecutionPlan, limit: Int, live: Bool? = nil) async throws -> (Data, HTTPURLResponse) {
         let body = FindRequest(plan: plan, limit: limit, live: live)
-        return try await postFindRaw(body: try JSONEncoder().encode(body))
+        return try await postFindRaw(body: JSONEncoder().encode(body))
     }
 
     private func postFindRaw(body: Data?) async throws -> (Data, HTTPURLResponse) {

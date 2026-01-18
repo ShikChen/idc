@@ -12,7 +12,7 @@ struct TestFixtureView: View {
     @State private var stepperValue: Int = 2
     @State private var menuSelection: String = "Daily"
     @State private var wheelSelection: String = "Two"
-    @State private var scheduledDate: Date = Date()
+    @State private var scheduledDate: Date = .init()
     @State private var accentColor: Color = .orange
     @State private var showAlert: Bool = false
     @State private var showDialog: Bool = false
@@ -425,22 +425,22 @@ struct FixtureBackground: View {
         case .controls:
             return [
                 Color(red: 0.98, green: 0.95, blue: 0.92),
-                Color(red: 0.90, green: 0.96, blue: 0.98)
+                Color(red: 0.90, green: 0.96, blue: 0.98),
             ]
         case .inputs:
             return [
                 Color(red: 0.95, green: 0.95, blue: 0.99),
-                Color(red: 0.90, green: 0.98, blue: 0.95)
+                Color(red: 0.90, green: 0.98, blue: 0.95),
             ]
         case .pickers:
             return [
                 Color(red: 0.96, green: 0.92, blue: 0.99),
-                Color(red: 0.92, green: 0.98, blue: 0.94)
+                Color(red: 0.92, green: 0.98, blue: 0.94),
             ]
         case .feedback:
             return [
                 Color(red: 0.95, green: 0.98, blue: 0.93),
-                Color(red: 0.92, green: 0.95, blue: 0.99)
+                Color(red: 0.92, green: 0.95, blue: 0.99),
             ]
         }
     }

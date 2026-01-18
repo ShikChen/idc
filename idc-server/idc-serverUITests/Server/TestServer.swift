@@ -111,7 +111,7 @@ actor TestServer {
             ("/stop", [.POST], { _ in
                 Task { await self.stop() }
                 return jsonResponse(HealthResponse(status: "stopping"))
-            })
+            }),
         ]
 
         for route in routes {

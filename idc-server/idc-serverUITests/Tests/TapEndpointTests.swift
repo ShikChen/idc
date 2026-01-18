@@ -264,7 +264,7 @@ final class TapEndpointTests: XCTestCase {
 
     private func postTapRaw(plan: ExecutionPlan?, at: TapPoint?) async throws -> (Data, HTTPURLResponse) {
         let body = TapRequest(plan: plan, at: at)
-        return try await postTapRaw(body: try JSONEncoder().encode(body))
+        return try await postTapRaw(body: JSONEncoder().encode(body))
     }
 
     private func postTapRaw(body: Data?) async throws -> (Data, HTTPURLResponse) {

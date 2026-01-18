@@ -21,7 +21,7 @@ struct FindService {
                 switch node {
                 case let .element(element):
                     guard element.exists else { return ([], false) }
-                    return ([try element.snapshot()], false)
+                    return try ([element.snapshot()], false)
                 case let .query(query):
                     let elements = query.allElementsBoundByIndex
                     let snapshots = try elements.prefix(limit).map { try $0.snapshot() }
