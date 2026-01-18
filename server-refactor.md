@@ -3,7 +3,7 @@
 ## API / Handler
 - [x] 抽出共用的 request decode + error mapping（含 DecodingError -> 400），避免 /tap、/find 重複邏輯
 - [x] 統一錯誤回應格式（例如加上 errorCode），讓 client 更容易處理
-- [ ] 把 route 註冊集中成表格或 enum，減少手動 appendRoute 的重複樣板
+- [x] 把 route 註冊集中成表格或 enum，減少手動 appendRoute 的重複樣板
 
 ## Concurrency / Lifecycle
 - [ ] 重整 TestServer lifecycle：統一 start / runForever，支援 cancel/await，避免 stop race
