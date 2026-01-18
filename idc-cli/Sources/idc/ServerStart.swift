@@ -30,42 +30,6 @@ struct ServerStart: AsyncParsableCommand {
     }
 }
 
-private struct SimctlList: Decodable {
-    let devices: [String: [SimDevice]]
-}
-
-private struct SimDevice: Decodable {
-    let udid: String
-    let name: String
-    let state: String
-    let isAvailable: Bool?
-}
-
-private func resolveBootedDevice(selectedUDID: String?) async throws -> SimDevice {
-    let data = try await runCommand("xcrun", ["simctl", "list", "devices", "booted", "--json"])
-    let decoded = try JSONDecoder().decode(SimctlList.self, from: data)
-    let devices = decoded.devices.values.flatMap { $0 }
-
-    if devices.isEmpty {
-        throw ValidationError("No booted simulators found. Boot a simulator or specify --udid.")
-    }
-
-    if let selectedUDID {
-        if let match = devices.first(where: { $0.udid == selectedUDID }) {
-            return match
-        }
-        let available = devices.map { "\($0.name) (\($0.udid))" }.joined(separator: ", ")
-        throw ValidationError("UDID not booted: \(selectedUDID). Booted: \(available)")
-    }
-
-    if devices.count == 1, let only = devices.first {
-        return only
-    }
-
-    let available = devices.map { "\($0.name) (\($0.udid))" }.joined(separator: ", ")
-    throw ValidationError("Multiple booted simulators. Specify --udid. Booted: \(available)")
-}
-
 private func locateServerProject() throws -> URL {
     let fm = FileManager.default
     var current = URL(fileURLWithPath: fm.currentDirectoryPath)
@@ -80,26 +44,6 @@ private func locateServerProject() throws -> URL {
     }
 
     throw ValidationError("Unable to locate idc-server.xcodeproj. Run from repo root or idc-cli.")
-}
-
-private func runCommand(_ command: String, _ arguments: [String]) async throws -> Data {
-    let result = try await run(
-        .name(command),
-        arguments: Arguments(arguments),
-        output: .bytes(limit: 2 * 1024 * 1024),
-        error: .string(limit: 32 * 1024)
-    )
-
-    switch result.terminationStatus {
-    case let .exited(code) where code == 0:
-        return Data(result.standardOutput)
-    case let .exited(code):
-        let stderr = result.standardError ?? ""
-        throw ValidationError("Command failed (\(command)) exit code \(code): \(stderr)")
-    case let .unhandledException(code):
-        let stderr = result.standardError ?? ""
-        throw ValidationError("Command failed (\(command)) unhandled exception \(code): \(stderr)")
-    }
 }
 
 private func runStreamingCommand(_ command: String, _ arguments: [String]) async throws {
