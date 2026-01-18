@@ -25,15 +25,11 @@ struct Find: AsyncParsableCommand {
     var timeout: Double = 5
 
     mutating func run() async throws {
-        let trimmed = selector.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw ValidationError("Selector must not be empty.")
-        }
         guard limit > 0 else {
             throw ValidationError("Limit must be greater than 0.")
         }
 
-        var parser = SelectorParser(trimmed)
+        var parser = SelectorParser(selector)
         let plan: ExecutionPlan
         do {
             let parsed = try parser.parseSelector()

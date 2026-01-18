@@ -8,12 +8,7 @@ enum DeviceSelection: Equatable, ExpressibleByArgument {
     case udid(String)
 
     init?(argument: String) {
-        let trimmed = argument.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            return nil
-        }
-
-        switch trimmed.lowercased() {
+        switch argument.lowercased() {
         case "auto":
             self = .auto
         case "simulator":
@@ -21,10 +16,10 @@ enum DeviceSelection: Equatable, ExpressibleByArgument {
         case "device":
             self = .deviceOnly
         default:
-            guard looksLikeUDID(trimmed) else {
+            guard looksLikeUDID(argument) else {
                 return nil
             }
-            self = .udid(trimmed)
+            self = .udid(argument)
         }
     }
 }

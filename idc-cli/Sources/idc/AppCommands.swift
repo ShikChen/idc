@@ -63,13 +63,8 @@ struct AppOpen: AsyncParsableCommand {
     var device: DeviceSelection = .auto
 
     mutating func run() async throws {
-        let trimmed = bundleId.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty else {
-            throw ValidationError("Bundle ID must not be empty.")
-        }
-
         let target = try await DeviceResolver.resolve(device, allowedKinds: .all)
-        try await target.openApp(bundleId: trimmed)
+        try await target.openApp(bundleId: bundleId)
     }
 }
 
