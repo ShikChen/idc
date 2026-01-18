@@ -18,7 +18,7 @@ struct Find: AsyncParsableCommand {
     @Flag(name: .long, help: "Use live query (slower, reflects current UI state).")
     var live: Bool = false
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")

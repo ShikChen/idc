@@ -9,7 +9,7 @@ struct Snapshot: AsyncParsableCommand {
     @Flag(name: .long, help: "Output raw JSON.")
     var json: Bool = false
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")

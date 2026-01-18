@@ -12,8 +12,13 @@ final class DeviceSelectionTests: XCTestCase {
         XCTAssertEqual(value, .simulatorOnly)
     }
 
-    func testDeviceSelection() {
-        let value = DeviceSelection(argument: "device")
+    func testSimSelection() {
+        let value = DeviceSelection(argument: "sim")
+        XCTAssertEqual(value, .simulatorOnly)
+    }
+
+    func testRealSelection() {
+        let value = DeviceSelection(argument: "real")
         XCTAssertEqual(value, .deviceOnly)
     }
 

@@ -9,7 +9,7 @@ struct ServerStart: AsyncParsableCommand {
         abstract: "Start idc-server on a booted simulator (keep-alive test)"
     )
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     mutating func run() async throws {

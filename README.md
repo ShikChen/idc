@@ -90,34 +90,34 @@ POST /element/{id}/tap
 ```bash
 # 設備管理
 idc devices list [--json]
-idc devices boot [--device auto|simulator|device|<udid>]
-idc devices shutdown [--device auto|simulator|device|<udid>]
+idc devices boot [--device auto|sim|real|<udid>]
+idc devices shutdown [--device auto|sim|real|<udid>]
 
 # 伺服器管理
-idc server deploy [--device auto|simulator|device|<udid>]
-idc server status [--device auto|simulator|device|<udid>]
+idc server deploy [--device auto|sim|real|<udid>]
+idc server status [--device auto|sim|real|<udid>]
 
 # App 管理
-idc app install <path> [--device auto|simulator|device|<udid>]
-idc app launch <bundle-id> [--device auto|simulator|device|<udid>]
-idc app terminate <bundle-id> [--device auto|simulator|device|<udid>]
+idc app install <path> [--device auto|sim|real|<udid>]
+idc app launch <bundle-id> [--device auto|sim|real|<udid>]
+idc app terminate <bundle-id> [--device auto|sim|real|<udid>]
 
 # UI 自動化（需要 idc-server 運行）
-idc ui screenshot [-o file] [--device auto|simulator|device|<udid>]
-idc ui tap <x> <y> [--device auto|simulator|device|<udid>]
-idc ui swipe <x1> <y1> <x2> <y2> [--device auto|simulator|device|<udid>]
-idc ui input <text> [--device auto|simulator|device|<udid>]
-idc snapshot [--json] [--device auto|simulator|device|<udid>]
+idc ui screenshot [-o file] [--device auto|sim|real|<udid>]
+idc ui tap <x> <y> [--device auto|sim|real|<udid>]
+idc ui swipe <x1> <y1> <x2> <y2> [--device auto|sim|real|<udid>]
+idc ui input <text> [--device auto|sim|real|<udid>]
+idc snapshot [--json] [--device auto|sim|real|<udid>]
 
 # 系統功能
-idc system openurl <url> [--device auto|simulator|device|<udid>]
-idc system location <lat> <lon> [--device auto|simulator|device|<udid>]
+idc system openurl <url> [--device auto|sim|real|<udid>]
+idc system location <lat> <lon> [--device auto|sim|real|<udid>]
 ```
 
 ### 設備選擇策略
 
 - 預設 `--device auto`：只有一台可用裝置時自動使用
-- 多台時需指定 `--device simulator` / `--device device` 或明確 `--device <udid>`
+- 多台時需指定 `--device sim` / `--device real` 或明確 `--device <udid>`
 
 ---
 

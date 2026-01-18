@@ -9,7 +9,7 @@ struct Screenshot: AsyncParsableCommand {
     @Option(name: [.customShort("o"), .long], help: "Output path. Use '-' for stdout.")
     var output: String?
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")

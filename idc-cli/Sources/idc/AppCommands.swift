@@ -14,7 +14,7 @@ struct AppList: AsyncParsableCommand {
         abstract: "List installed apps on a device or booted simulator"
     )
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Flag(name: .long, help: "Output JSON.")
@@ -59,7 +59,7 @@ struct AppOpen: AsyncParsableCommand {
     @Argument(help: "App bundle identifier.")
     var bundleId: String
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     mutating func run() async throws {

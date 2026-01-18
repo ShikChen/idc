@@ -7,7 +7,7 @@ struct ServerHealth: AsyncParsableCommand {
         abstract: "Check idc-server health on localhost:8080"
     )
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")

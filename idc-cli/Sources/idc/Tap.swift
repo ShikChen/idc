@@ -12,7 +12,7 @@ struct Tap: AsyncParsableCommand {
     @Option(name: .long, help: "Tap point x,y or x%,y% (optional).")
     var at: String?
 
-    @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
+    @Option(name: .long, help: "Device selector: auto|sim|real|<udid>.")
     var device: DeviceSelection = .auto
 
     @Option(name: .long, help: "Request timeout in seconds.")

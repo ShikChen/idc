@@ -11,9 +11,9 @@ enum DeviceSelection: Equatable, ExpressibleByArgument {
         switch argument.lowercased() {
         case "auto":
             self = .auto
-        case "simulator":
+        case "sim", "simulator":
             self = .simulatorOnly
-        case "device":
+        case "real":
             self = .deviceOnly
         default:
             guard looksLikeUDID(argument) else {
@@ -225,7 +225,7 @@ enum DeviceResolver {
             }
         }
 
-        var message = "Multiple available targets. Use --device <udid> or --device simulator/device."
+        var message = "Multiple available targets. Use --device <udid> or --device sim/real."
         if !simulators.isEmpty {
             message += " Simulators: \(formatSimulators(simulators))."
         }
