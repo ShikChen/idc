@@ -9,7 +9,7 @@ struct InstalledApp: Codable, Equatable {
 
 struct AppOpenRequest: Encodable {
     let bundleId: String
-    let wait: Double
+    let wait: Double?
 
     enum CodingKeys: String, CodingKey {
         case bundleId = "bundle_id"

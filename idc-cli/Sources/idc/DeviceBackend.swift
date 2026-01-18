@@ -39,8 +39,10 @@ struct DeviceKindSet: OptionSet {
 
 protocol DeviceBackend {
     func listApps() async throws -> [InstalledApp]
-    func openApp(bundleId: String, wait: Double) async throws
+    func openApp(bundleId: String) async throws
 }
+
+private let defaultOpenWait: Double = 5
 
 struct SimulatorBackend: DeviceBackend {
     let simulator: SimDevice
@@ -50,7 +52,8 @@ struct SimulatorBackend: DeviceBackend {
         return try parseSimctlListApps(data)
     }
 
-    func openApp(bundleId: String, wait: Double) async throws {
+    func openApp(bundleId: String) async throws {
+        let wait = defaultOpenWait
         let timeout = max(wait, 5)
         try await validateServer(timeout: timeout)
         try await openAppViaServer(bundleId: bundleId, wait: wait, timeout: timeout)
@@ -73,8 +76,8 @@ struct RealDeviceBackend: DeviceBackend {
         try await listDeviceApps(deviceId: device.udid)
     }
 
-    func openApp(bundleId: String, wait: Double) async throws {
-        try await openDeviceApp(deviceId: device.udid, bundleId: bundleId, wait: wait)
+    func openApp(bundleId: String) async throws {
+        try await openDeviceApp(deviceId: device.udid, bundleId: bundleId, wait: defaultOpenWait)
     }
 }
 
@@ -91,12 +94,12 @@ enum ResolvedDevice: DeviceBackend {
         }
     }
 
-    func openApp(bundleId: String, wait: Double) async throws {
+    func openApp(bundleId: String) async throws {
         switch self {
         case let .simulator(simulator):
-            try await simulator.openApp(bundleId: bundleId, wait: wait)
+            try await simulator.openApp(bundleId: bundleId)
         case let .device(device):
-            try await device.openApp(bundleId: bundleId, wait: wait)
+            try await device.openApp(bundleId: bundleId)
         }
     }
 

@@ -58,7 +58,7 @@ func postJSON<T: Encodable>(path: String, body: T, timeout: TimeInterval) async 
     }
 }
 
-func openAppViaServer(bundleId: String, wait: Double, timeout: TimeInterval) async throws {
+func openAppViaServer(bundleId: String, wait: Double?, timeout: TimeInterval) async throws {
     let request = AppOpenRequest(bundleId: bundleId, wait: wait)
     let (data, response) = try await postJSON(path: "/app/open", body: request, timeout: timeout)
     guard response.statusCode == 200 else {

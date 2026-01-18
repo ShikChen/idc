@@ -62,20 +62,14 @@ struct AppOpen: AsyncParsableCommand {
     @Option(name: .long, help: "Device selector: auto|simulator|device|<udid>.")
     var device: DeviceSelection = .auto
 
-    @Option(name: .long, help: "Wait for foreground confirmation in seconds (0 disables).")
-    var wait: Double = 5
-
     mutating func run() async throws {
         let trimmed = bundleId.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty else {
             throw ValidationError("Bundle ID must not be empty.")
         }
-        guard wait >= 0 else {
-            throw ValidationError("Wait must be greater than or equal to 0.")
-        }
 
         let target = try await DeviceResolver.resolve(device, allowedKinds: .all)
-        try await target.openApp(bundleId: trimmed, wait: wait)
+        try await target.openApp(bundleId: trimmed)
     }
 }
 
