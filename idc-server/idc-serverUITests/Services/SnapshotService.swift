@@ -16,16 +16,16 @@ enum SnapshotError: LocalizedError {
 
 struct SnapshotService {
     func snapshot() async throws -> SnapshotResponse {
-        return try await MainActor.run {
+        let snapshot = try await MainActor.run {
             guard let app = RunningApp.getForegroundApp() else {
                 throw SnapshotError.noForeground
             }
             do {
-                let snapshot = try app.snapshot()
-                return SnapshotResponse(root: buildSnapshotNode(snapshot))
+                return try app.snapshot()
             } catch {
                 throw SnapshotError.snapshotFailed(error.localizedDescription)
             }
         }
+        return SnapshotResponse(root: buildSnapshotNode(snapshot))
     }
 }

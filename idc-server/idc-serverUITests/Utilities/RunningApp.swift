@@ -1,6 +1,7 @@
 import XCTest
 
 enum RunningApp {
+    @MainActor
     static func getForegroundApp() -> XCUIApplication? {
         let runningAppIds = XCUIApplication.activeAppsInfo().compactMap { $0["bundleId"] as? String }
         let filtered = runningAppIds.filter {

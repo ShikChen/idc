@@ -105,7 +105,6 @@ enum JSONValue: Codable {
     }
 }
 
-@MainActor
 func buildSnapshotNode(_ snapshot: XCUIElementSnapshot) -> SnapshotNode {
     let children = snapshot.children.map { buildSnapshotNode($0) }
     return SnapshotNode(

@@ -6,22 +6,25 @@ struct TapService {
 
     func resolve(_ request: TapRequest) async throws -> TapResponse {
         let executor = PlanExecutor()
+        let hasSelector = request.plan != nil && request.plan?.pipeline.isEmpty == false
+        if !hasSelector && request.at == nil {
+            throw PlanError.invalidPlan("Missing selector or tap point.")
+        }
+        if let point = request.at {
+            try validateTapPoint(point)
+        }
         var lastError: Error?
         for attempt in 0 ..< maxAttempts {
             do {
-                return try await MainActor.run {
+                let tapped = try await MainActor.run { () -> TapElement? in
                     guard let app = RunningApp.getForegroundApp() else {
                         throw PlanError.invalidPlan("No foreground app found.")
                     }
-                    let hasSelector = request.plan != nil && request.plan?.pipeline.isEmpty == false
-                    if !hasSelector && request.at == nil {
-                        throw PlanError.invalidPlan("Missing selector or tap point.")
-                    }
                     let selected = hasSelector ? try executor.resolve(request.plan, from: app) : nil
                     try performTap(app: app, element: selected, point: request.at)
-                    let tapped = selected.map { TapElement(from: $0) }
-                    return TapResponse(selected: tapped)
+                    return selected.map { TapElement(from: $0) }
                 }
+                return TapResponse(selected: tapped)
             } catch let error as PlanError {
                 lastError = error
                 if case .noMatches = error, attempt < (maxAttempts - 1) {
@@ -36,7 +39,6 @@ struct TapService {
 
     private func performTap(app: XCUIApplication, element: XCUIElement?, point: TapPoint?) throws {
         if let point {
-            try validateTapPoint(point)
             switch point.space {
             case .screen:
                 let screenPoint = resolveScreenPoint(app: app, point: point.point)
