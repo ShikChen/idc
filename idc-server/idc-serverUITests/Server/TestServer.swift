@@ -55,27 +55,22 @@ actor TestServer {
         let tapHandler = TapHandler(service: TapService())
         let findHandler = FindHandler(service: FindService())
 
-        await server.appendRoute("/health", for: [.GET]) { request in
-            await healthHandler.handle(request)
-        }
-        await server.appendRoute("/info", for: [.GET]) { request in
-            await infoHandler.handle(request)
-        }
-        await server.appendRoute("/screenshot", for: [.GET]) { request in
-            await screenshotHandler.handle(request)
-        }
-        await server.appendRoute("/snapshot", for: [.GET]) { request in
-            await snapshotHandler.handle(request)
-        }
-        await server.appendRoute("/tap", for: [.POST]) { request in
-            await tapHandler.handle(request)
-        }
-        await server.appendRoute("/find", for: [.POST]) { request in
-            await findHandler.handle(request)
-        }
-        await server.appendRoute("/stop", for: [.POST]) { _ in
-            Task { await self.stop() }
-            return jsonResponse(HealthResponse(status: "stopping"))
+        typealias RouteHandler = @Sendable (HTTPRequest) async -> HTTPResponse
+        let routes: [(path: String, methods: [HTTPMethod], handler: RouteHandler)] = [
+            ("/health", [.GET], { request in await healthHandler.handle(request) }),
+            ("/info", [.GET], { request in await infoHandler.handle(request) }),
+            ("/screenshot", [.GET], { request in await screenshotHandler.handle(request) }),
+            ("/snapshot", [.GET], { request in await snapshotHandler.handle(request) }),
+            ("/tap", [.POST], { request in await tapHandler.handle(request) }),
+            ("/find", [.POST], { request in await findHandler.handle(request) }),
+            ("/stop", [.POST], { _ in
+                Task { await self.stop() }
+                return jsonResponse(HealthResponse(status: "stopping"))
+            })
+        ]
+
+        for route in routes {
+            await server.appendRoute(route.path, for: route.methods, handler: route.handler)
         }
         routesConfigured = true
     }
